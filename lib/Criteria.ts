@@ -5,4 +5,4 @@ class Criteria {
     public less(field : String, value : any) : Criteria {throw "Not implemented";}
 }
 
-module.exports = Criteria;
+export = Criteria;
