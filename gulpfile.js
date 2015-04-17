@@ -1,20 +1,26 @@
 var gulp = require('gulp'),
-    gulpTs = require('gulp-typescript'),
+    ts = require('gulp-typescript'),
     merge = require('merge2'),
+    browserify = require('gulp-browserify'),
+    concat = require('gulp-concat'),
     sourcemaps = require('gulp-sourcemaps'),
     src = ['lib/*.ts', 'lib/**/*.ts', 'typings/**/*.ts'],
     dest = {
         definitions: 'definitions',
         commonjs: 'dist/commonjs',
         amd: 'dist/amd',
+        browser: 'dist/browser',
         lib: 'lib',
-        single: 'dist/talaria.js'
+        single: {
+            dir: 'dist',
+            fileName: 'talaria.js'
+        }
     };
 
 function buildDefinitions () {
     return gulp
         .src(src)
-        .pipe(gulpTs({
+        .pipe(ts({
             typescript: require('typescript'),
             declarationFiles: true,
             noExternalResolve: true,
@@ -28,7 +34,7 @@ function buildDefinitions () {
 function buildCommonJs () {
     return gulp
         .src(src)
-        .pipe(gulpTs({
+        .pipe(ts({
             typescript: require('typescript'),
             module: 'commonjs',
             target: 'ES5'
@@ -42,7 +48,7 @@ function buildCommonJs () {
 function buildAmd () {
     return gulp
         .src(src)
-        .pipe(gulpTs({
+        .pipe(ts({
             typescript: require('typescript'),
             module: 'amd',
             target: 'ES5'
@@ -53,7 +59,20 @@ function buildAmd () {
 }
 
 function buildSingle () {
-    //in some way there should be single file created
+    //TODO: refactor talaria into state where browserified talaria.js should contain whole project
+    return gulp
+        .src(src)
+        .pipe(ts({
+            typescript: require('typescript'),
+            module: 'commonjs',
+            target: 'ES5'
+        }))
+        .js
+        .pipe(browserify({}))
+        .pipe(sourcemaps.write())
+        .pipe(gulp.dest(dest.browser))
+        .pipe(concat(dest.single.fileName))
+        .pipe(gulp.dest(dest.single.dir))
 }
 
 gulp.task('build', function () {
@@ -61,6 +80,6 @@ gulp.task('build', function () {
         buildCommonJs(),
         buildDefinitions(),
         buildAmd(),
-        //buildSingle()
+        buildSingle()
     ]);
 });
