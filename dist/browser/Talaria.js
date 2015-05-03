@@ -1,4 +1,28 @@
 (function e(t,n,r){function s(o,u){if(!n[o]){if(!t[o]){var a=typeof require=="function"&&require;if(!u&&a)return a(o,!0);if(i)return i(o,!0);throw new Error("Cannot find module '"+o+"'")}var f=n[o]={exports:{}};t[o][0].call(f.exports,function(e){var n=t[o][1][e];return s(n?n:e)},f,f.exports,e,t,n,r)}return n[o].exports}var i=typeof require=="function"&&require;for(var o=0;o<r.length;o++)s(r[o]);return s})({1:[function(require,module,exports){
+var EntityConfig = (function () {
+    function EntityConfig(name, properties, key) {
+        if (key === void 0) { key = []; }
+        this.name = name;
+        this.properties = properties;
+        this.key = key;
+    }
+    return EntityConfig;
+})();
+module.exports = EntityConfig;
+
+
+},{}],2:[function(require,module,exports){
+var EntityInfo = (function () {
+    function EntityInfo(entity, config) {
+        this.entity = entity;
+        this.config = config;
+    }
+    return EntityInfo;
+})();
+module.exports = EntityInfo;
+
+
+},{}],3:[function(require,module,exports){
 ///<reference path="../../typings/es6-promise/es6-promise.d.ts" />
 ///<reference path="../../typings/node/node.d.ts" />
 var rsvp = require('es6-promise');
@@ -94,7 +118,243 @@ var InMemoryStrategy = (function () {
 })();
 module.exports = InMemoryStrategy;
 
-},{"es6-promise":2}],2:[function(require,module,exports){
+
+},{"es6-promise":8}],4:[function(require,module,exports){
+var Proxy = (function () {
+    function Proxy(obj, accessors) {
+        var that = this;
+        function defineProperties() {
+            function simpleGetter(name) {
+                return this[name];
+            }
+            function simpleSetter(name, value) {
+                this[name] = value;
+            }
+            for (var name in obj) {
+                var property = accessors[name] || {}, getter = undefined, setter = undefined;
+                getter = (function () {
+                    if (property.get) {
+                        return property.get;
+                    }
+                    else {
+                        return simpleGetter.bind(obj, name);
+                    }
+                })();
+                setter = (function () {
+                    if (property.set) {
+                        return property.set;
+                    }
+                    else {
+                        return simpleSetter.bind(obj, name);
+                    }
+                })();
+                Object.defineProperty(that, name, {
+                    configurable: false,
+                    enumerable: true,
+                    get: getter,
+                    set: setter
+                });
+            }
+        }
+        defineProperties();
+    }
+    return Proxy;
+})();
+module.exports = Proxy;
+
+
+},{}],5:[function(require,module,exports){
+var rsvp = require('es6-promise');
+var Promise = rsvp.Promise;
+var Repository = (function () {
+    function Repository(entityInfo, unitOfWork, persistenceStrategy) {
+        this.cache = [];
+        this.entityInfo = entityInfo;
+        this.unitOfWork = unitOfWork;
+        this.persistenceStrategy = persistenceStrategy;
+    }
+    Repository.prototype.add = function (obj) {
+        var _this = this;
+        return this.has(obj).then(function (result) {
+            if (!result) {
+                _this.cache.push(obj);
+                _this.unitOfWork.registerNew(_this.entityInfo, obj);
+            }
+        });
+    };
+    Repository.prototype.remove = function (obj) {
+        var _this = this;
+        return this.has(obj).then(function (result) {
+            if (result) {
+                _this.cache.splice(_this.cache.indexOf(obj), 1);
+                _this.unitOfWork.registerDeleted(_this.entityInfo, obj);
+            }
+        });
+    };
+    Repository.prototype.findOne = function () {
+        throw new Error('Not implemented yet');
+    };
+    Repository.prototype.findAll = function () {
+        var _this = this;
+        return this.persistenceStrategy.find(this.entityInfo, null).then(function (found) {
+            found.forEach(function (item) {
+                if (_this.cache.indexOf(item) == -1) {
+                    _this.cache.push(item);
+                }
+            });
+            return _this.cache.slice();
+        });
+    };
+    Repository.prototype.has = function (obj) {
+        var _this = this;
+        return new Promise(function (resolve, reject) {
+            if (_this.cache.indexOf(obj) > -1) {
+                resolve(true);
+            }
+            else {
+                _this.persistenceStrategy.find(_this.entityInfo, obj).then(function (found) {
+                    found.forEach(function (item) {
+                        this.cache.push(item);
+                    });
+                    resolve(found.length > 0);
+                });
+            }
+        });
+    };
+    return Repository;
+})();
+module.exports = Repository;
+
+
+},{"es6-promise":8}],6:[function(require,module,exports){
+var Proxy = require('./Proxy');
+var TrackedObject = (function () {
+    function TrackedObject(info, object) {
+        this.info = info;
+        this.object = object;
+    }
+    Object.defineProperty(TrackedObject.prototype, "Info", {
+        get: function () {
+            return this.info;
+        },
+        enumerable: true,
+        configurable: true
+    });
+    Object.defineProperty(TrackedObject.prototype, "Object", {
+        get: function () {
+            return this.object;
+        },
+        enumerable: true,
+        configurable: true
+    });
+    return TrackedObject;
+})();
+var UnitOfWork = (function () {
+    function UnitOfWork(strategy) {
+        this.newObjects = [];
+        this.dirtyObjects = [];
+        this.fetchedObjects = [];
+        this.deletedObjects = [];
+        this.strategy = strategy;
+    }
+    UnitOfWork.prototype.registerNew = function (info, obj) {
+        this.newObjects.push(new TrackedObject(info, obj));
+        return obj;
+    };
+    UnitOfWork.prototype.registerFetched = function (info, obj) {
+        this.fetchedObjects.push(new TrackedObject(info, obj));
+        return this.getProxy(info, obj);
+    };
+    UnitOfWork.prototype.registerDirty = function (info, obj) {
+        this.dirtyObjects.push(new TrackedObject(info, obj));
+        return obj;
+    };
+    UnitOfWork.prototype.registerDeleted = function (info, obj) {
+        this.deletedObjects.push(new TrackedObject(info, obj));
+        return obj;
+    };
+    UnitOfWork.prototype.commit = function () {
+        var strategy = this.strategy;
+        this.newObjects.forEach(function (obj) {
+            strategy.create(obj.Info, obj.Object);
+        });
+        this.dirtyObjects.forEach(function (obj) {
+            strategy.update(obj.Info, obj.Object);
+        });
+        this.deletedObjects.forEach(function (obj) {
+            strategy.delete(obj.Info, obj.Object);
+        });
+    };
+    UnitOfWork.prototype.rollback = function () {
+    };
+    UnitOfWork.prototype.getProxy = function (info, obj) {
+        var setters = {};
+        function modificationHandler(info, target, name, value) {
+            this.registerDirty(info, target);
+            target[name] = value;
+        }
+        for (var name in obj) {
+            setters[name] = { set: modificationHandler.bind(this, info, obj, name) };
+        }
+        return new Proxy(obj, setters);
+    };
+    return UnitOfWork;
+})();
+module.exports = UnitOfWork;
+
+
+},{"./Proxy":4}],7:[function(require,module,exports){
+var EntityConfig = require('./EntityConfig');
+var EntityInfo = require('./EntityInfo');
+var Repository = require('./Repository');
+var Proxy = require('./Proxy');
+var UnitOfWork = require('./UnitOfWork');
+var InMemoryStrategy = require('./PersistenceStrategy/InMemoryStrategy');
+var Talaria = (function () {
+    function Talaria() {
+        this.defaultStrategy = new InMemoryStrategy();
+        this.unitOfWork = new UnitOfWork(this.defaultStrategy);
+        this.entities = {};
+        this.repositories = {};
+    }
+    Talaria.getInstance = function () {
+        if (!Talaria.instance) {
+            Talaria.instance = new Talaria();
+        }
+        return Talaria.instance;
+    };
+    Talaria.prototype.registerEntity = function (constructor, config) {
+        this.entities[config.name] = new EntityInfo(constructor, config);
+    };
+    Talaria.prototype.getEntityInfo = function (name) {
+        return this.entities[name];
+    };
+    Talaria.prototype.getRepository = function (name) {
+        if (!this.repositories[name]) {
+            this.repositories[name] = new Repository(this.getEntityInfo(name), this.unitOfWork, this.defaultStrategy);
+        }
+        return this.repositories[name];
+    };
+    Talaria.prototype.setDefaultStrategy = function (strategy) {
+        this.defaultStrategy = strategy;
+        this.unitOfWork = new UnitOfWork(strategy);
+    };
+    Talaria.prototype.getDefaultStrategy = function () {
+        return this.defaultStrategy;
+    };
+    Talaria.prototype.getDefaultUnitOfWork = function () {
+        return this.unitOfWork;
+    };
+    Talaria.EntityInfo = EntityInfo;
+    Talaria.EntityConfig = EntityConfig;
+    Talaria.Proxy = Proxy;
+    Talaria.Repository = Repository;
+    Talaria.UnitOfWork = UnitOfWork;
+    return Talaria;
+})();
+module.exports = Talaria;
+
+},{"./EntityConfig":1,"./EntityInfo":2,"./PersistenceStrategy/InMemoryStrategy":3,"./Proxy":4,"./Repository":5,"./UnitOfWork":6}],8:[function(require,module,exports){
 (function (process,global){
 /*!
  * @overview es6-promise - a tiny implementation of Promises/A+.
@@ -1057,7 +1317,7 @@ module.exports = InMemoryStrategy;
     }
 }).call(this);
 }).call(this,require("1YiZ5S"),typeof self !== "undefined" ? self : typeof window !== "undefined" ? window : {})
-},{"1YiZ5S":3}],3:[function(require,module,exports){
+},{"1YiZ5S":9}],9:[function(require,module,exports){
 // shim for using process in browser
 
 var process = module.exports = {};
@@ -1122,5 +1382,5 @@ process.chdir = function (dir) {
     throw new Error('process.chdir is not supported');
 };
 
-},{}]},{},[1])
-//# sourceMappingURL=data:application/json;base64,eyJ2ZXJzaW9uIjozLCJzb3VyY2VzIjpbIlBlcnNpc3RlbmNlU3RyYXRlZ3kvSW5NZW1vcnlTdHJhdGVneS50cyJdLCJuYW1lcyI6WyJJbk1lbW9yeVN0cmF0ZWd5IiwiSW5NZW1vcnlTdHJhdGVneS5jb25zdHJ1Y3RvciIsIkluTWVtb3J5U3RyYXRlZ3kuY3JlYXRlIiwiSW5NZW1vcnlTdHJhdGVneS51cGRhdGUiLCJJbk1lbW9yeVN0cmF0ZWd5LmRlbGV0ZSIsIkluTWVtb3J5U3RyYXRlZ3kuZmluZCIsIkluTWVtb3J5U3RyYXRlZ3kuZmluZC5hbGxGaWx0ZXIiLCJJbk1lbW9yeVN0cmF0ZWd5LmZpbmQuc3RyaWN0RmlsdGVyIiwiSW5NZW1vcnlTdHJhdGVneS5maW5kQnlLZXkiLCJJbk1lbW9yeVN0cmF0ZWd5Lm1hdGNoZXNLZXkiLCJJbk1lbW9yeVN0cmF0ZWd5LmdldENvbGxlY3Rpb24iXSwibWFwcGluZ3MiOiJBQUFBLGtFQUFrRTtBQUNsRSxvREFBb0Q7QUFLcEQsSUFBTyxJQUFJLFdBQVcsYUFBYSxDQUFDLENBQUM7QUFDckMsSUFBTyxPQUFPLEdBQUcsSUFBSSxDQUFDLE9BQU8sQ0FBQztBQUU5QixJQUFNLGdCQUFnQjtJQUdsQkEsU0FIRUEsZ0JBQWdCQTtRQUNWQyxZQUFPQSxHQUE4QkEsRUFBRUEsQ0FBQ0E7SUFFekJBLENBQUNBO0lBRWpCRCxpQ0FBTUEsR0FBYkEsVUFBZUEsSUFBZUEsRUFBRUEsR0FBR0E7UUFBbkNFLGlCQU1DQTtRQUxHQSxNQUFNQSxDQUFDQSxJQUFJQSxPQUFPQSxDQUFPQSxVQUFDQSxPQUFPQSxFQUFFQSxNQUFNQTtZQUNyQ0EsS0FBSUEsQ0FBQ0EsT0FBT0EsQ0FBQ0EsSUFBSUEsQ0FBQ0EsTUFBTUEsQ0FBQ0EsSUFBSUEsQ0FBQ0EsR0FBR0EsS0FBSUEsQ0FBQ0EsT0FBT0EsQ0FBQ0EsSUFBSUEsQ0FBQ0EsTUFBTUEsQ0FBQ0EsSUFBSUEsQ0FBQ0EsSUFBSUEsRUFBRUEsQ0FBQ0E7WUFDdEVBLEtBQUlBLENBQUNBLE9BQU9BLENBQUNBLElBQUlBLENBQUNB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QUFDQSxDQUFDQSxHQUFDQSxDQUFDQSxFQUFFQSxDQUFDQSxHQUFDQSxJQUFJQSxDQUFDQSxNQUFNQSxDQUFDQSxHQUFHQSxDQUFDQSxNQUFNQSxFQUFFQSxDQUFDQSxFQUFFQSxFQUFFQSxDQUFDQTtZQUN6Q0EsSUFBSUEsSUFBSUEsR0FBR0EsSUFBSUEsQ0FBQ0EsTUFBTUEsQ0FBQ0EsR0FBR0EsQ0FBQ0EsQ0FBQ0EsQ0FBQ0EsQ0FBQ0E7WUFDOUJBLEVBQUVBLENBQUFBLENBQUNBLEdBQUdBLENBQUNBLElBQUlBLENBQUNBLElBQUlBLE9BQU9BLENBQUNBLElBQUlBLENBQUNBLENBQUNBLENBQUNBLENBQUNBO2dCQUM1QkEsTUFBTUEsQ0FBQ0EsS0FBS0EsQ0FBQ0E7WUFDakJBLENBQUNBO1FBQ0xBLENBQUNBO1FBQ0RBLE1BQU1BLENBQUNBLElBQUlBLENBQUNBO0lBQ2hCQSxDQUFDQTtJQUVPVCx3Q0FBYUEsR0FBckJBLFVBQXVCQSxJQUFnQkE7UUFDbkNVLEVBQUVBLENBQUFBLENBQUNBLENBQUNBLElBQUlBLENBQUNBLE9BQU9BLENBQUNBLElBQUlBLENBQUNBLE1BQU1BLENBQUNBLElBQUlBLENBQUNBLENBQUNBLENBQUNBLENBQUNBO1lBQ2pDQSxJQUFJQSxDQUFDQSxPQUFPQSxDQUFDQSxJQUFJQSxDQUFDQSxNQUFNQSxDQUFDQSxJQUFJQSxDQUFDQSxHQUFHQSxFQUFFQSxDQUFDQTtRQUN4Q0EsQ0FBQ0E7UUFDREEsTUFBTUEsQ0FBQ0EsSUFBSUEsQ0FBQ0EsT0FBT0EsQ0FBQ0EsSUFBSUEsQ0FBQ0EsTUFBTUEsQ0FBQ0EsSUFBSUEsQ0FBQ0EsQ0FBQ0E7SUFDMUNBLENBQUNBO0lBQ0xWLHVCQUFDQTtBQUFEQSxDQXpGQSxBQXlGQ0EsSUFBQTtBQUNELEFBQTBCLGlCQUFqQixnQkFBZ0IsQ0FBQyIsImZpbGUiOiJQZXJzaXN0ZW5jZVN0cmF0ZWd5L0luTWVtb3J5U3RyYXRlZ3kuanMiLCJzb3VyY2VSb290IjoiL2hvbWUva2Fwa2UvcHJvamVjdHMvdGFsYXJpYS8iLCJzb3VyY2VzQ29udGVudCI6W119
+},{}]},{},[7])
+//# sourceMappingURL=data:application/json;base64,eyJ2ZXJzaW9uIjozLCJzb3VyY2VzIjpbIlRhbGFyaWEudHMiXSwibmFtZXMiOlsiVGFsYXJpYSIsIlRhbGFyaWEuY29uc3RydWN0b3IiLCJUYWxhcmlhLmdldEluc3RhbmNlIiwiVGFsYXJpYS5yZWdpc3RlckVudGl0eSIsIlRhbGFyaWEuZ2V0RW50aXR5SW5mbyIsIlRhbGFyaWEuZ2V0UmVwb3NpdG9yeSIsIlRhbGFyaWEuc2V0RGVmYXVsdFN0cmF0ZWd5IiwiVGFsYXJpYS5nZXREZWZhdWx0U3RyYXRlZ3kiLCJUYWxhcmlhLmdldERlZmF1bHRVbml0T2ZXb3JrIl0sIm1hcHBpbmdzIjoiQUFBQSxJQUFPLFlBQVksV0FBVyxnQkFBZ0IsQ0FBQyxDQUFDO0FBQ2hELElBQU8sVUFBVSxXQUFXLGNBQWMsQ0FBQyxDQUFDO0FBQzVDLElBQU8sVUFBVSxXQUFXLGNBQWMsQ0FBQyxDQUFDO0FBQzVDLElBQU8sS0FBSyxXQUFXLFNBQVMsQ0FBQyxDQUFDO0FBQ2xDLElBQU8sVUFBVSxXQUFXLGNBQWMsQ0FBQyxDQUFDO0FBRzVDLElBQU8sZ0JBQWdCLFdBQVcsd0NBQXdDLENBQUMsQ0FBQztBQUU1RSxJQUFNLE9BQU87SUFBYkEsU0FBTUEsT0FBT0E7UUFnQkRDLG9CQUFlQSxHQUF5QkEsSUFBSUEsZ0JBQWdCQSxFQUFFQSxDQUFDQTtRQUMvREEsZUFBVUEsR0FBZ0JBLElBQUlBLFVBQVVBLENBQUNBLElBQUlBLENBQUNBLGVBQWVBLENBQUNBLENBQUNBO1FBQy9EQSxhQUFRQSxHQUFnQ0EsRUFBRUEsQ0FBQ0E7UUFDM0NBLGlCQUFZQSxHQUFxQ0EsRUFBRUEsQ0FBQ0E7SUE2QmhFQSxDQUFDQTtJQXZDaUJELG1CQUFXQSxHQUF6QkE7UUFDSUUsRUFBRUEsQ0FBQUEsQ0FBQ0EsQ0FBQ0EsT0FBT0EsQ0FBQ0EsUUFBUUEsQ0FBQ0EsQ0FBQ0EsQ0FBQ0E7WUFDbkJBLE9BQU9BLENBQUNBLFFBQVFBLEdBQUdBLElBQUlBLE9BQU9BLEVBQUVBLENBQUNBO1FBQ3JDQSxDQUFDQTtRQUNEQSxNQUFNQSxDQUFDQSxPQUFPQSxDQUFDQSxRQUFRQSxDQUFDQTtJQUM1QkEsQ0FBQ0E7SUFPTUYsZ0NBQWNBLEdBQXJCQSxVQUF1QkEsV0FBZUEsRUFBRUEsTUFBbUJBO1FBQ3ZERyxJQUFJQSxDQUFDQSxRQUFRQSxDQUFDQSxNQUFNQSxDQUFDQSxJQUFJQSxDQUFDQSxHQUFHQSxJQUFJQSxVQUFVQSxDQUFDQSxXQUFXQSxFQUFFQSxNQUFNQSxDQUFDQSxDQUFDQTtJQUNyRUEsQ0FBQ0E7SUFFTUgsK0JBQWFBLEdBQXBCQSxVQUFzQkEsSUFBV0E7UUFDN0JJLE1BQU1BLENBQUNBLElBQUlBLENBQUNBLFFBQVFBLENBQUNBLElBQUlBLENBQUNBLENBQUNBO0lBQy9CQSxDQUFDQTtJQUVNSiwrQkFBYUEsR0FBcEJBLFVBQXlCQSxJQUFXQTtRQUNoQ0ssRUFBRUEsQ0FBQUEsQ0FBQ0EsQ0FBQ0EsSUFBSUEsQ0FBQ0EsWUFBWUEsQ0FBQ0EsSUFBSUEsQ0FBQ0EsQ0FBQ0EsQ0FBQ0EsQ0FBQ0E7WUFDMUJBLElBQUlBLENBQUNBLFlBQVlBLENBQUNBLElBQUlBLENBQUNBLEdBQUdBLElBQUlBLFVBQVVBLENBQUlBLElBQUlBLENBQUNBLGFBQWFBLENBQUNBLElBQUlBLENBQUNBLEVBQUVBLElBQUlBLENBQUNBLFVBQVVBLEVBQUVBLElBQUlBLENBQUNBLGVBQWVBLENBQUNBLENBQUNBO1FBQ2pIQSxDQUFDQTtRQUNEQSxNQUFNQSxDQUFDQSxJQUFJQSxDQUFDQSxZQUFZQSxDQUFDQSxJQUFJQSxDQUFDQSxDQUFDQTtJQUNuQ0EsQ0FBQ0E7SUFFTUwsb0NBQWtCQSxHQUF6QkEsVUFBMkJBLFFBQThCQTtRQUNyRE0sSUFBSUEsQ0FBQ0EsZUFBZUEsR0FBR0EsUUFBUUEsQ0FBQ0E7UUFDaENBLElBQUlBLENBQUNBLFVBQVVBLEdBQUdBLElBQUlBLFVBQVVBLENBQUNBLFFBQVFBLENBQUNBLENBQUNBO0lBQy9DQSxDQUFDQTtJQUVNTixvQ0FBa0JBLEdBQXpCQTtRQUNJTyxNQUFNQSxDQUFDQSxJQUFJQSxDQUFDQSxlQUFlQSxDQUFDQTtJQUNoQ0EsQ0FBQ0E7SUFFTVAsc0NBQW9CQSxHQUEzQkE7UUFDSVEsTUFBTUEsQ0FBQ0EsSUFBSUEsQ0FBQ0EsVUFBVUEsQ0FBQ0E7SUFDM0JBLENBQUNBO0lBOUNhUixrQkFBVUEsR0FBR0EsVUFBVUEsQ0FBQ0E7SUFDeEJBLG9CQUFZQSxHQUFHQSxZQUFZQSxDQUFDQTtJQUM1QkEsYUFBS0EsR0FBR0EsS0FBS0EsQ0FBQ0E7SUFDZEEsa0JBQVVBLEdBQUdBLFVBQVVBLENBQUNBO0lBQ3hCQSxrQkFBVUEsR0FBR0EsVUFBVUEsQ0FBQ0E7SUEyQzFDQSxjQUFDQTtBQUFEQSxDQWhEQSxBQWdEQ0EsSUFBQTtBQUVELEFBQWlCLGlCQUFSLE9BQU8sQ0FBQyIsImZpbGUiOiJUYWxhcmlhLmpzIiwic291cmNlUm9vdCI6Ii9ob21lL2thcGtlL3Byb2plY3RzL3RhbGFyaWEvIiwic291cmNlc0NvbnRlbnQiOltdfQ==

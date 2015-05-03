@@ -57,3 +57,4 @@ node_modules
 typings/
 .idea/
 lib/*.js
+lib/**/*.js
