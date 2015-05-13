@@ -7,7 +7,9 @@ import Promise = rsvp.Promise;
 
 class Repository<T> {
     private entityInfo:EntityInfo;
+    //should be used only for writing actions
     private unitOfWork:UnitOfWork;
+    //should be used only for reading actions
     private persistenceStrategy:PersistenceStrategy;
     private cache:T[] = [];
 
