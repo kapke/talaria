@@ -50,19 +50,10 @@ describe('Talaria\'s facade', () => {
             strategy = new InMemoryStrategy();
         });
 
-        it('should be able to set default persistence strategy', () => {
-            expect(talaria.setDefaultStrategy).toEqual(jasmine.any(Function));
-        });
-
-        it('should make default strategy public accessible', () => {
-            talaria.setDefaultStrategy(strategy);
-            expect(talaria.getDefaultStrategy()).toBe(strategy);
-        });
-
         it('should create accessible UnitOfWork instance connected with default strategy', () => {
             spyOn(strategy, 'create').and.callThrough();
-            talaria.setDefaultStrategy(strategy);
-            var gotUnitOfWork : UnitOfWork = talaria.getDefaultUnitOfWork();
+            talaria.DefaultStrategy = strategy;
+            var gotUnitOfWork : UnitOfWork = talaria.DefaultUnitOfWork;
             gotUnitOfWork.registerNew(entityInfo, new Person('Ala', 'Makota'));
             gotUnitOfWork.commit();
             expect(gotUnitOfWork).toEqual(jasmine.any(UnitOfWork));

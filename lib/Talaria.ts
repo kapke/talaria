@@ -28,6 +28,23 @@ class Talaria {
     private entities : {[name:string]:EntityInfo} = {};
     private repositories : {[name:string]:Repository<any>} = {};
 
+    get DefaultStrategy():PersistenceStrategy {
+        return this.defaultStrategy;
+    }
+
+    /*
+        Probably this should be removed and moved setting default strategy
+        should be done in constructor
+     */
+    set DefaultStrategy(value:PersistenceStrategy) {
+        this.defaultStrategy = value;
+        this.unitOfWork = new UnitOfWork(value);
+    }
+
+    get DefaultUnitOfWork():UnitOfWork {
+        return this.unitOfWork;
+    }
+
     public registerEntity (constructor:any, config:EntityConfig) {
         this.entities[config.name] = new EntityInfo(constructor, config);
     }
@@ -41,19 +58,6 @@ class Talaria {
             this.repositories[name] = new Repository<T>(this.getEntityInfo(name), this.unitOfWork, this.defaultStrategy);
         }
         return this.repositories[name];
-    }
-
-    public setDefaultStrategy (strategy : PersistenceStrategy) {
-        this.defaultStrategy = strategy;
-        this.unitOfWork = new UnitOfWork(strategy);
-    }
-
-    public getDefaultStrategy () : PersistenceStrategy {
-        return this.defaultStrategy;
-    }
-
-    public getDefaultUnitOfWork () : UnitOfWork {
-        return this.unitOfWork;
     }
 }
 

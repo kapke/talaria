@@ -17,11 +17,10 @@ declare class Talaria {
     private unitOfWork;
     private entities;
     private repositories;
+    DefaultStrategy: PersistenceStrategy;
+    DefaultUnitOfWork: UnitOfWork;
     registerEntity(constructor: any, config: EntityConfig): void;
     getEntityInfo(name: string): EntityInfo;
     getRepository<T>(name: string): Repository<T>;
-    setDefaultStrategy(strategy: PersistenceStrategy): void;
-    getDefaultStrategy(): PersistenceStrategy;
-    getDefaultUnitOfWork(): UnitOfWork;
 }
 export = Talaria;

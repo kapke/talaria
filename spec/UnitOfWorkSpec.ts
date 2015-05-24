@@ -18,7 +18,7 @@ class FakeStrategy implements PersistenceStrategy {
     public delete(info:EntityInfo, obj:any):Promise<void> {
         throw new Error("Not implemented");
     }
-    public find(info:EntityInfo, criteria:Object) {
+    public find(info:EntityInfo, criteria:Object):Promise<any[]> {
         throw new Error("Not implemented");
     }
 }

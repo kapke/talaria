@@ -13,25 +13,30 @@ describe('Repository', function () {
         somePerson = new Person('Ala', 'Makota', 1);
     });
     it('should make object available after adding to repository', function (done) {
-        repository.add(somePerson).then(repository.has.bind(repository, somePerson)).then(function (result) {
+        var addedPerson;
+        repository.add(somePerson).then(function (result) {
+            addedPerson = result;
+        }).then(function () {
+            return repository.has(addedPerson);
+        }).then(function (result) {
             expect(result).toEqual(true);
             done();
         });
     });
     it('should make object present on find results after adding to repository', function (done) {
         //TODO: improve code style for this test
-        repository.add(somePerson).then(function () {
+        repository.add(somePerson).then(function (addedPerson) {
             repository.findAll().then(function (results) {
-                expect(results).toContain(somePerson);
+                expect(results).toContain(addedPerson);
                 done();
             });
         });
     });
     it('should make object unavailable after removing from repository', function (done) {
         //TODO: improve code style for this test
-        repository.add(somePerson).then(function () {
-            repository.remove(somePerson).then(function () {
-                repository.has(somePerson).then(function (result) {
+        repository.add(somePerson).then(function (addedPerson) {
+            repository.remove(addedPerson).then(function () {
+                repository.has(addedPerson).then(function (result) {
                     expect(result).toEqual(false);
                     done();
                 });
@@ -40,11 +45,24 @@ describe('Repository', function () {
     });
     it('should make object not present on find results after removing from repository', function () {
         //TODO: improve code style for this test
-        repository.add(somePerson).then(function () {
-            repository.remove(somePerson).then(function () {
+        repository.add(somePerson).then(function (addedPerson) {
+            repository.remove(addedPerson).then(function () {
                 repository.findAll().then(function (results) {
-                    expect(results).not.toContain(somePerson);
+                    expect(results).not.toContain(addedPerson);
                 });
+            });
+        });
+    });
+    it('should register objects in given UnitOfWork, so given UnitOfWork should register object changes', function (done) {
+        spyOn(strategy, 'update').and.callThrough();
+        repository.add(somePerson).then(function (registeredPerson) {
+            unitOfWork.commit();
+            repository.findAll().then(function (results) {
+                var person = results[0];
+                person.name = 'Basia';
+                unitOfWork.commit();
+                expect(strategy.update).toHaveBeenCalled();
+                done();
             });
         });
     });

@@ -175,11 +175,10 @@ var Repository = (function () {
     }
     Repository.prototype.add = function (obj) {
         var _this = this;
-        return this.has(obj).then(function (result) {
-            if (!result) {
-                _this.cache.push(obj);
-                _this.unitOfWork.registerNew(_this.entityInfo, obj);
-            }
+        return new Promise(function (resolve, reject) {
+            var registered = _this.unitOfWork.registerNew(_this.entityInfo, obj);
+            _this.cache.push(registered);
+            resolve(registered);
         });
     };
     Repository.prototype.remove = function (obj) {
@@ -229,9 +228,10 @@ module.exports = Repository;
 },{"es6-promise":8}],6:[function(require,module,exports){
 var Proxy = require('./Proxy');
 var TrackedObject = (function () {
-    function TrackedObject(info, object) {
+    function TrackedObject(info, object, proxy) {
         this.info = info;
         this.object = object;
+        this.proxy = proxy;
     }
     Object.defineProperty(TrackedObject.prototype, "Info", {
         get: function () {
@@ -247,6 +247,13 @@ var TrackedObject = (function () {
         enumerable: true,
         configurable: true
     });
+    Object.defineProperty(TrackedObject.prototype, "Proxy", {
+        get: function () {
+            return this.proxy;
+        },
+        enumerable: true,
+        configurable: true
+    });
     return TrackedObject;
 })();
 var UnitOfWork = (function () {
@@ -258,20 +265,24 @@ var UnitOfWork = (function () {
         this.strategy = strategy;
     }
     UnitOfWork.prototype.registerNew = function (info, obj) {
-        this.newObjects.push(new TrackedObject(info, obj));
-        return obj;
+        var tracker = new TrackedObject(info, obj, this.getProxy(info, obj));
+        this.newObjects.push(tracker);
+        return tracker.Proxy;
     };
     UnitOfWork.prototype.registerFetched = function (info, obj) {
-        this.fetchedObjects.push(new TrackedObject(info, obj));
-        return this.getProxy(info, obj);
+        var tracker = new TrackedObject(info, obj, this.getProxy(info, obj));
+        this.fetchedObjects.push(tracker);
+        return tracker.Proxy;
     };
     UnitOfWork.prototype.registerDirty = function (info, obj) {
-        this.dirtyObjects.push(new TrackedObject(info, obj));
-        return obj;
+        var tracker = new TrackedObject(info, obj, this.getProxy(info, obj));
+        this.dirtyObjects.push(tracker);
+        return tracker.Proxy;
     };
     UnitOfWork.prototype.registerDeleted = function (info, obj) {
-        this.deletedObjects.push(new TrackedObject(info, obj));
-        return obj;
+        var tracker = new TrackedObject(info, obj, this.getProxy(info, obj));
+        this.deletedObjects.push(tracker);
+        return tracker.Proxy;
     };
     UnitOfWork.prototype.commit = function () {
         var strategy = this.strategy;
@@ -323,6 +334,28 @@ var Talaria = (function () {
         }
         return Talaria.instance;
     };
+    Object.defineProperty(Talaria.prototype, "DefaultStrategy", {
+        get: function () {
+            return this.defaultStrategy;
+        },
+        /*
+            Probably this should be removed and moved setting default strategy
+            should be done in constructor
+         */
+        set: function (value) {
+            this.defaultStrategy = value;
+            this.unitOfWork = new UnitOfWork(value);
+        },
+        enumerable: true,
+        configurable: true
+    });
+    Object.defineProperty(Talaria.prototype, "DefaultUnitOfWork", {
+        get: function () {
+            return this.unitOfWork;
+        },
+        enumerable: true,
+        configurable: true
+    });
     Talaria.prototype.registerEntity = function (constructor, config) {
         this.entities[config.name] = new EntityInfo(constructor, config);
     };
@@ -334,16 +367,6 @@ var Talaria = (function () {
             this.repositories[name] = new Repository(this.getEntityInfo(name), this.unitOfWork, this.defaultStrategy);
         }
         return this.repositories[name];
-    };
-    Talaria.prototype.setDefaultStrategy = function (strategy) {
-        this.defaultStrategy = strategy;
-        this.unitOfWork = new UnitOfWork(strategy);
-    };
-    Talaria.prototype.getDefaultStrategy = function () {
-        return this.defaultStrategy;
-    };
-    Talaria.prototype.getDefaultUnitOfWork = function () {
-        return this.unitOfWork;
     };
     Talaria.EntityInfo = EntityInfo;
     Talaria.EntityConfig = EntityConfig;
@@ -1383,4 +1406,4 @@ process.chdir = function (dir) {
 };
 
 },{}]},{},[7])
-//# sourceMappingURL=data:application/json;base64,eyJ2ZXJzaW9uIjozLCJzb3VyY2VzIjpbIlRhbGFyaWEudHMiXSwibmFtZXMiOlsiVGFsYXJpYSIsIlRhbGFyaWEuY29uc3RydWN0b3IiLCJUYWxhcmlhLmdldEluc3RhbmNlIiwiVGFsYXJpYS5yZWdpc3RlckVudGl0eSIsIlRhbGFyaWEuZ2V0RW50aXR5SW5mbyIsIlRhbGFyaWEuZ2V0UmVwb3NpdG9yeSIsIlRhbGFyaWEuc2V0RGVmYXVsdFN0cmF0ZWd5IiwiVGFsYXJpYS5nZXREZWZhdWx0U3RyYXRlZ3kiLCJUYWxhcmlhLmdldERlZmF1bHRVbml0T2ZXb3JrIl0sIm1hcHBpbmdzIjoiQUFBQSxJQUFPLFlBQVksV0FBVyxnQkFBZ0IsQ0FBQyxDQUFDO0FBQ2hELElBQU8sVUFBVSxXQUFXLGNBQWMsQ0FBQyxDQUFDO0FBQzVDLElBQU8sVUFBVSxXQUFXLGNBQWMsQ0FBQyxDQUFDO0FBQzVDLElBQU8sS0FBSyxXQUFXLFNBQVMsQ0FBQyxDQUFDO0FBQ2xDLElBQU8sVUFBVSxXQUFXLGNBQWMsQ0FBQyxDQUFDO0FBRzVDLElBQU8sZ0JBQWdCLFdBQVcsd0NBQXdDLENBQUMsQ0FBQztBQUU1RSxJQUFNLE9BQU87SUFBYkEsU0FBTUEsT0FBT0E7UUFnQkRDLG9CQUFlQSxHQUF5QkEsSUFBSUEsZ0JBQWdCQSxFQUFFQSxDQUFDQTtRQUMvREEsZUFBVUEsR0FBZ0JBLElBQUlBLFVBQVVBLENBQUNBLElBQUlBLENBQUNBLGVBQWVBLENBQUNBLENBQUNBO1FBQy9EQSxhQUFRQSxHQUFnQ0EsRUFBRUEsQ0FBQ0E7UUFDM0NBLGlCQUFZQSxHQUFxQ0EsRUFBRUEsQ0FBQ0E7SUE2QmhFQSxDQUFDQTtJQXZDaUJELG1CQUFXQSxHQUF6QkE7UUFDSUUsRUFBRUEsQ0FBQUEsQ0FBQ0EsQ0FBQ0EsT0FBT0EsQ0FBQ0EsUUFBUUEsQ0FBQ0EsQ0FBQ0EsQ0FBQ0E7WUFDbkJBLE9BQU9BLENBQUNBLFFBQVFBLEdBQUdBLElBQUlBLE9BQU9BLEVBQUVBLENBQUNBO1FBQ3JDQSxDQUFDQTtRQUNEQSxNQUFNQSxDQUFDQSxPQUFPQSxDQUFDQSxRQUFRQSxDQUFDQTtJQUM1QkEsQ0FBQ0E7SUFPTUYsZ0NBQWNBLEdBQXJCQSxVQUF1QkEsV0FBZUEsRUFBRUEsTUFBbUJBO1FBQ3ZERyxJQUFJQSxDQUFDQSxRQUFRQSxDQUFDQSxNQUFNQSxDQUFDQSxJQUFJQSxDQUFDQSxHQUFHQSxJQUFJQSxVQUFVQSxDQUFDQSxXQUFXQSxFQUFFQSxNQUFNQSxDQUFDQSxDQUFDQTtJQUNyRUEsQ0FBQ0E7SUFFTUgsK0JBQWFBLEdBQXBCQSxVQUFzQkEsSUFBV0E7UUFDN0JJLE1BQU1BLENBQUNBLElBQUlBLENBQUNBLFFBQVFBLENBQUNBLElBQUlBLENBQUNBLENBQUNBO0lBQy9CQSxDQUFDQTtJQUVNSiwrQkFBYUEsR0FBcEJBLFVBQXlCQSxJQUFXQTtRQUNoQ0ssRUFBRUEsQ0FBQUEsQ0FBQ0EsQ0FBQ0EsSUFBSUEsQ0FBQ0EsWUFBWUEsQ0FBQ0EsSUFBSUEsQ0FBQ0EsQ0FBQ0EsQ0FBQ0EsQ0FBQ0E7WUFDMUJBLElBQUlBLENBQUNBLFlBQVlBLENBQUNBLElBQUlBLENBQUNBLEdBQUdBLElBQUlBLFVBQVVBLENBQUlBLElBQUlBLENBQUNBLGFBQWFBLENBQUNBLElBQUlBLENBQUNBLEVBQUVBLElBQUlBLENBQUNBLFVBQVVBLEVBQUVBLElBQUlBLENBQUNBLGVBQWVBLENBQUNBLENBQUNBO1FBQ2pIQSxDQUFDQTtRQUNEQSxNQUFNQSxDQUFDQSxJQUFJQSxDQUFDQSxZQUFZQSxDQUFDQSxJQUFJQSxDQUFDQSxDQUFDQTtJQUNuQ0EsQ0FBQ0E7SUFFTUwsb0NBQWtCQSxHQUF6QkEsVUFBMkJBLFFBQThCQTtRQUNyRE0sSUFBSUEsQ0FBQ0EsZUFBZUEsR0FBR0EsUUFBUUEsQ0FBQ0E7UUFDaENBLElBQUlBLENBQUNBLFVBQVVBLEdBQUdBLElBQUlBLFVBQVVBLENBQUNBLFFBQVFBLENBQUNBLENBQUNBO0lBQy9DQSxDQUFDQTtJQUVNTixvQ0FBa0JBLEdBQXpCQTtRQUNJTyxNQUFNQSxDQUFDQSxJQUFJQSxDQUFDQSxlQUFlQSxDQUFDQTtJQUNoQ0EsQ0FBQ0E7SUFFTVAsc0NBQW9CQSxHQUEzQkE7UUFDSVEsTUFBTUEsQ0FBQ0EsSUFBSUEsQ0FBQ0EsVUFBVUEsQ0FBQ0E7SUFDM0JBLENBQUNBO0lBOUNhUixrQkFBVUEsR0FBR0EsVUFBVUEsQ0FBQ0E7SUFDeEJBLG9CQUFZQSxHQUFHQSxZQUFZQSxDQUFDQTtJQUM1QkEsYUFBS0EsR0FBR0EsS0FBS0EsQ0FBQ0E7SUFDZEEsa0JBQVVBLEdBQUdBLFVBQVVBLENBQUNBO0lBQ3hCQSxrQkFBVUEsR0FBR0EsVUFBVUEsQ0FBQ0E7SUEyQzFDQSxjQUFDQTtBQUFEQSxDQWhEQSxBQWdEQ0EsSUFBQTtBQUVELEFBQWlCLGlCQUFSLE9BQU8sQ0FBQyIsImZpbGUiOiJUYWxhcmlhLmpzIiwic291cmNlUm9vdCI6Ii9ob21lL2thcGtlL3Byb2plY3RzL3RhbGFyaWEvIiwic291cmNlc0NvbnRlbnQiOltdfQ==
+//# sourceMappingURL=data:application/json;base64,eyJ2ZXJzaW9uIjozLCJzb3VyY2VzIjpbIlRhbGFyaWEudHMiXSwibmFtZXMiOlsiVGFsYXJpYSIsIlRhbGFyaWEuY29uc3RydWN0b3IiLCJUYWxhcmlhLmdldEluc3RhbmNlIiwiVGFsYXJpYS5EZWZhdWx0U3RyYXRlZ3kiLCJUYWxhcmlhLkRlZmF1bHRVbml0T2ZXb3JrIiwiVGFsYXJpYS5yZWdpc3RlckVudGl0eSIsIlRhbGFyaWEuZ2V0RW50aXR5SW5mbyIsIlRhbGFyaWEuZ2V0UmVwb3NpdG9yeSJdLCJtYXBwaW5ncyI6IkFBQUEsSUFBTyxZQUFZLFdBQVcsZ0JBQWdCLENBQUMsQ0FBQztBQUNoRCxJQUFPLFVBQVUsV0FBVyxjQUFjLENBQUMsQ0FBQztBQUM1QyxJQUFPLFVBQVUsV0FBVyxjQUFjLENBQUMsQ0FBQztBQUM1QyxJQUFPLEtBQUssV0FBVyxTQUFTLENBQUMsQ0FBQztBQUNsQyxJQUFPLFVBQVUsV0FBVyxjQUFjLENBQUMsQ0FBQztBQUc1QyxJQUFPLGdCQUFnQixXQUFXLHdDQUF3QyxDQUFDLENBQUM7QUFFNUUsSUFBTSxPQUFPO0lBQWJBLFNBQU1BLE9BQU9BO1FBZ0JEQyxvQkFBZUEsR0FBeUJBLElBQUlBLGdCQUFnQkEsRUFBRUEsQ0FBQ0E7UUFDL0RBLGVBQVVBLEdBQWdCQSxJQUFJQSxVQUFVQSxDQUFDQSxJQUFJQSxDQUFDQSxlQUFlQSxDQUFDQSxDQUFDQTtRQUMvREEsYUFBUUEsR0FBZ0NBLEVBQUVBLENBQUNBO1FBQzNDQSxpQkFBWUEsR0FBcUNBLEVBQUVBLENBQUNBO0lBaUNoRUEsQ0FBQ0E7SUEzQ2lCRCxtQkFBV0EsR0FBekJBO1FBQ0lFLEVBQUVBLENBQUFBLENBQUNBLENBQUNBLE9BQU9BLENBQUNBLFFBQVFBLENBQUNBLENBQUNBLENBQUNBO1lBQ25CQSxPQUFPQSxDQUFDQSxRQUFRQSxHQUFHQSxJQUFJQSxPQUFPQSxFQUFFQSxDQUFDQTtRQUNyQ0EsQ0FBQ0E7UUFDREEsTUFBTUEsQ0FBQ0EsT0FBT0EsQ0FBQ0EsUUFBUUEsQ0FBQ0E7SUFDNUJBLENBQUNBO0lBT0RGLHNCQUFJQSxvQ0FBZUE7YUFBbkJBO1lBQ0lHLE1BQU1BLENBQUNBLElBQUlBLENBQUNBLGVBQWVBLENBQUNBO1FBQ2hDQSxDQUFDQTtRQUVESDs7O1dBR0dBO2FBQ0hBLFVBQW9CQSxLQUF5QkE7WUFDekNHLElBQUlBLENBQUNBLGVBQWVBLEdBQUdBLEtBQUtBLENBQUNBO1lBQzdCQSxJQUFJQSxDQUFDQSxVQUFVQSxHQUFHQSxJQUFJQSxVQUFVQSxDQUFDQSxLQUFLQSxDQUFDQSxDQUFDQTtRQUM1Q0EsQ0FBQ0E7OztPQVRBSDtJQVdEQSxzQkFBSUEsc0NBQWlCQTthQUFyQkE7WUFDSUksTUFBTUEsQ0FBQ0EsSUFBSUEsQ0FBQ0EsVUFBVUEsQ0FBQ0E7UUFDM0JBLENBQUNBOzs7T0FBQUo7SUFFTUEsZ0NBQWNBLEdBQXJCQSxVQUF1QkEsV0FBZUEsRUFBRUEsTUFBbUJBO1FBQ3ZESyxJQUFJQSxDQUFDQSxRQUFRQSxDQUFDQSxNQUFNQSxDQUFDQSxJQUFJQSxDQUFDQSxHQUFHQSxJQUFJQSxVQUFVQSxDQUFDQSxXQUFXQSxFQUFFQSxNQUFNQSxDQUFDQSxDQUFDQTtJQUNyRUEsQ0FBQ0E7SUFFTUwsK0JBQWFBLEdBQXBCQSxVQUFzQkEsSUFBV0E7UUFDN0JNLE1BQU1BLENBQUNBLElBQUlBLENBQUNBLFFBQVFBLENBQUNBLElBQUlBLENBQUNBLENBQUNBO0lBQy9CQSxDQUFDQTtJQUVNTiwrQkFBYUEsR0FBcEJBLFVBQXlCQSxJQUFXQTtRQUNoQ08sRUFBRUEsQ0FBQUEsQ0FBQ0EsQ0FBQ0EsSUFBSUEsQ0FBQ0EsWUFBWUEsQ0FBQ0EsSUFBSUEsQ0FBQ0EsQ0FBQ0EsQ0FBQ0EsQ0FBQ0E7WUFDMUJBLElBQUlBLENBQUNBLFlBQVlBLENBQUNBLElBQUlBLENBQUNBLEdBQUdBLElBQUlBLFVBQVVBLENBQUlBLElBQUlBLENBQUNBLGFBQWFBLENBQUNBLElBQUlBLENBQUNBLEVBQUVBLElBQUlBLENBQUNBLFVBQVVBLEVBQUVBLElBQUlBLENBQUNBLGVBQWVBLENBQUNBLENBQUNBO1FBQ2pIQSxDQUFDQTtRQUNEQSxNQUFNQSxDQUFDQSxJQUFJQSxDQUFDQSxZQUFZQSxDQUFDQSxJQUFJQSxDQUFDQSxDQUFDQTtJQUNuQ0EsQ0FBQ0E7SUFsRGFQLGtCQUFVQSxHQUFHQSxVQUFVQSxDQUFDQTtJQUN4QkEsb0JBQVlBLEdBQUdBLFlBQVlBLENBQUNBO0lBQzVCQSxhQUFLQSxHQUFHQSxLQUFLQSxDQUFDQTtJQUNkQSxrQkFBVUEsR0FBR0EsVUFBVUEsQ0FBQ0E7SUFDeEJBLGtCQUFVQSxHQUFHQSxVQUFVQSxDQUFDQTtJQStDMUNBLGNBQUNBO0FBQURBLENBcERBLEFBb0RDQSxJQUFBO0FBRUQsQUFBaUIsaUJBQVIsT0FBTyxDQUFDIiwiZmlsZSI6IlRhbGFyaWEuanMiLCJzb3VyY2VSb290IjoiL2hvbWUva2Fwa2UvcHJvamVjdHMvdGFsYXJpYS8iLCJzb3VyY2VzQ29udGVudCI6W119

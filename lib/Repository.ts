@@ -18,12 +18,11 @@ class Repository<T> {
         this.unitOfWork = unitOfWork;
         this.persistenceStrategy = persistenceStrategy;
 	}
-	public add(obj: T) : Promise<void> {
-        return this.has(obj).then((result : boolean) => {
-            if(!result) {
-                this.cache.push(obj);
-                this.unitOfWork.registerNew(this.entityInfo, obj);
-            }
+	public add(obj: T) : Promise<T> {
+        return new Promise<T>((resolve, reject) => {
+            var registered:T = <T>this.unitOfWork.registerNew(this.entityInfo, obj);
+            this.cache.push(registered);
+            resolve(registered);
         });
     }
 	public remove(obj : T) : Promise<void> {
@@ -34,7 +33,7 @@ class Repository<T> {
             }
         });
     }
-	public findOne() : T {
+	public findOne() : Promise<T> {
         throw new Error('Not implemented yet');
     }
     public findAll() : Promise<Array<T>> {

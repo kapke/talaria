@@ -8,9 +8,9 @@ declare class Repository<T> {
     private persistenceStrategy;
     private cache;
     constructor(entityInfo: EntityInfo, unitOfWork: UnitOfWork, persistenceStrategy: PersistenceStrategy);
-    add(obj: T): Promise<void>;
+    add(obj: T): Promise<T>;
     remove(obj: T): Promise<void>;
-    findOne(): T;
+    findOne(): Promise<T>;
     findAll(): Promise<Array<T>>;
     has(obj: T): Promise<boolean>;
 }
