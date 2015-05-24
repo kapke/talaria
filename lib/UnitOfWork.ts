@@ -6,14 +6,18 @@ import EntityInfo = require('./EntityInfo');
 class TrackedObject {
     private info:EntityInfo;
     private object:any;
+    private proxy:Proxy;
 
     get Info():EntityInfo {return this.info;}
 
     get Object():any {return this.object;}
 
-    constructor (info:EntityInfo, object:any) {
+    get Proxy():Proxy {return this.proxy;}
+
+    constructor (info:EntityInfo, object:any, proxy:Proxy) {
         this.info = info;
         this.object = object;
+        this.proxy = proxy;
     }
 }
 
@@ -29,23 +33,27 @@ class UnitOfWork {
     }
 
     public registerNew (info:EntityInfo, obj) : Object {
-        this.newObjects.push(new TrackedObject(info, obj));
-        return obj;
+        var tracker:TrackedObject = new TrackedObject(info, obj, this.getProxy(info, obj));
+        this.newObjects.push(tracker);
+        return tracker.Proxy;
     }
 
     public registerFetched (info:EntityInfo, obj) : Object {
-        this.fetchedObjects.push(new TrackedObject(info, obj));
-        return this.getProxy(info, obj);
+        var tracker:TrackedObject = new TrackedObject(info, obj, this.getProxy(info, obj));
+        this.fetchedObjects.push(tracker);
+        return tracker.Proxy;
     }
 
     public registerDirty (info:EntityInfo, obj) : Object {
-        this.dirtyObjects.push(new TrackedObject(info, obj));
-        return obj;
+        var tracker:TrackedObject = new TrackedObject(info, obj, this.getProxy(info, obj));
+        this.dirtyObjects.push(tracker);
+        return tracker.Proxy;
     }
 
     public registerDeleted (info:EntityInfo, obj) : Object {
-        this.deletedObjects.push(new TrackedObject(info, obj));
-        return obj;
+        var tracker:TrackedObject = new TrackedObject(info, obj, this.getProxy(info, obj));
+        this.deletedObjects.push(tracker);
+        return tracker.Proxy;
     }
 
 	public commit () {

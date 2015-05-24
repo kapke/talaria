@@ -45,16 +45,26 @@ class InMemoryStrategy implements PersistenceStrategy {
         });
     }
 
-    public find (info:EntityInfo, criteria:Object) {
-        return new Promise<Array<any>>((resolve, reject) => {
-            resolve(this.getCollection(info).filter((obj) => {
-                for(var name in criteria) {
-                    if(obj[name] != criteria[name]) {
-                        return false;
-                    }
+    public find (info:EntityInfo, criteria:Object) : Promise<Array<any>> {
+        function allFilter (obj) : boolean {return true;}
+        function strictFilter (obj) : boolean {
+            for(var name in criteria) {
+                if(obj[name] != criteria[name]) {
+                    return false;
                 }
-                return true;
-            }));
+            }
+            return true;
+        }
+
+        return new Promise<Array<any>>((resolve, reject) => {
+            var collection = this.getCollection(info),
+                filter : (any) => boolean;
+            if(criteria == null) {
+                filter = allFilter;
+            } else {
+                filter = strictFilter;
+            }
+            resolve(collection.filter(filter));
         });
     }
 
@@ -80,7 +90,10 @@ class InMemoryStrategy implements PersistenceStrategy {
         return true;
     }
 
-    private getCollection (info: EntityInfo) : Array<Object> {
+    private getCollection (info: EntityInfo) : Array<any> {
+        if(!this.objects[info.config.name]) {
+            this.objects[info.config.name] = [];
+        }
         return this.objects[info.config.name];
     }
 }

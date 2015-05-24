@@ -1,4 +1,169 @@
 (function e(t,n,r){function s(o,u){if(!n[o]){if(!t[o]){var a=typeof require=="function"&&require;if(!u&&a)return a(o,!0);if(i)return i(o,!0);throw new Error("Cannot find module '"+o+"'")}var f=n[o]={exports:{}};t[o][0].call(f.exports,function(e){var n=t[o][1][e];return s(n?n:e)},f,f.exports,e,t,n,r)}return n[o].exports}var i=typeof require=="function"&&require;for(var o=0;o<r.length;o++)s(r[o]);return s})({1:[function(require,module,exports){
+var EntityConfig = (function () {
+    function EntityConfig(name, properties, key) {
+        if (key === void 0) { key = []; }
+        this.name = name;
+        this.properties = properties;
+        this.key = key;
+    }
+    return EntityConfig;
+})();
+module.exports = EntityConfig;
+
+
+},{}],2:[function(require,module,exports){
+var EntityInfo = (function () {
+    function EntityInfo(entity, config) {
+        this.entity = entity;
+        this.config = config;
+    }
+    return EntityInfo;
+})();
+module.exports = EntityInfo;
+
+
+},{}],3:[function(require,module,exports){
+///<reference path="../../typings/es6-promise/es6-promise.d.ts" />
+///<reference path="../../typings/node/node.d.ts" />
+var rsvp = require('es6-promise');
+var Promise = rsvp.Promise;
+var InMemoryStrategy = (function () {
+    function InMemoryStrategy() {
+        this.objects = {};
+    }
+    InMemoryStrategy.prototype.create = function (info, obj) {
+        var _this = this;
+        return new Promise(function (resolve, reject) {
+            _this.objects[info.config.name] = _this.objects[info.config.name] || [];
+            _this.objects[info.config.name].push(obj);
+            resolve();
+        });
+    };
+    InMemoryStrategy.prototype.update = function (info, obj) {
+        return this.findByKey(info, obj).then(function (found) {
+            for (var name in found) {
+                found[name] = obj[name];
+            }
+        });
+    };
+    InMemoryStrategy.prototype.delete = function (info, obj) {
+        var _this = this;
+        var collection = this.getCollection(info);
+        var resolved = false;
+        return new Promise(function (resolve, reject) {
+            for (var i = 0; i < collection.length; i++) {
+                if (_this.matchesKey(info, obj, collection[i])) {
+                    collection.splice(i, 1);
+                    resolved = true;
+                    resolve();
+                }
+            }
+            if (!resolved) {
+                reject();
+            }
+        });
+    };
+    InMemoryStrategy.prototype.find = function (info, criteria) {
+        var _this = this;
+        function allFilter(obj) {
+            return true;
+        }
+        function strictFilter(obj) {
+            for (var name in criteria) {
+                if (obj[name] != criteria[name]) {
+                    return false;
+                }
+            }
+            return true;
+        }
+        return new Promise(function (resolve, reject) {
+            var collection = _this.getCollection(info), filter;
+            if (criteria == null) {
+                filter = allFilter;
+            }
+            else {
+                filter = strictFilter;
+            }
+            resolve(collection.filter(filter));
+        });
+    };
+    InMemoryStrategy.prototype.findByKey = function (info, keyValue) {
+        var _this = this;
+        var collection = this.getCollection(info);
+        return new Promise(function (resolve, reject) {
+            for (var i = 0; i < collection.length; i++) {
+                if (_this.matchesKey(info, keyValue, collection[i])) {
+                    resolve(collection[i]);
+                }
+            }
+            reject();
+        });
+    };
+    InMemoryStrategy.prototype.matchesKey = function (info, ref, current) {
+        for (var i = 0; i < info.config.key.length; i++) {
+            var name = info.config.key[i];
+            if (ref[name] != current[name]) {
+                return false;
+            }
+        }
+        return true;
+    };
+    InMemoryStrategy.prototype.getCollection = function (info) {
+        if (!this.objects[info.config.name]) {
+            this.objects[info.config.name] = [];
+        }
+        return this.objects[info.config.name];
+    };
+    return InMemoryStrategy;
+})();
+module.exports = InMemoryStrategy;
+
+
+},{"es6-promise":8}],4:[function(require,module,exports){
+var Proxy = (function () {
+    function Proxy(obj, accessors) {
+        var that = this;
+        function defineProperties() {
+            function simpleGetter(name) {
+                return this[name];
+            }
+            function simpleSetter(name, value) {
+                this[name] = value;
+            }
+            for (var name in obj) {
+                var property = accessors[name] || {}, getter = undefined, setter = undefined;
+                getter = (function () {
+                    if (property.get) {
+                        return property.get;
+                    }
+                    else {
+                        return simpleGetter.bind(obj, name);
+                    }
+                })();
+                setter = (function () {
+                    if (property.set) {
+                        return property.set;
+                    }
+                    else {
+                        return simpleSetter.bind(obj, name);
+                    }
+                })();
+                Object.defineProperty(that, name, {
+                    configurable: false,
+                    enumerable: true,
+                    get: getter,
+                    set: setter
+                });
+            }
+        }
+        defineProperties();
+    }
+    return Proxy;
+})();
+module.exports = Proxy;
+
+
+},{}],5:[function(require,module,exports){
 var rsvp = require('es6-promise');
 var Promise = rsvp.Promise;
 var Repository = (function () {
@@ -59,7 +224,160 @@ var Repository = (function () {
 })();
 module.exports = Repository;
 
-},{"es6-promise":2}],2:[function(require,module,exports){
+
+},{"es6-promise":8}],6:[function(require,module,exports){
+var Proxy = require('./Proxy');
+var TrackedObject = (function () {
+    function TrackedObject(info, object, proxy) {
+        this.info = info;
+        this.object = object;
+        this.proxy = proxy;
+    }
+    Object.defineProperty(TrackedObject.prototype, "Info", {
+        get: function () {
+            return this.info;
+        },
+        enumerable: true,
+        configurable: true
+    });
+    Object.defineProperty(TrackedObject.prototype, "Object", {
+        get: function () {
+            return this.object;
+        },
+        enumerable: true,
+        configurable: true
+    });
+    Object.defineProperty(TrackedObject.prototype, "Proxy", {
+        get: function () {
+            return this.proxy;
+        },
+        enumerable: true,
+        configurable: true
+    });
+    return TrackedObject;
+})();
+var UnitOfWork = (function () {
+    function UnitOfWork(strategy) {
+        this.newObjects = [];
+        this.dirtyObjects = [];
+        this.fetchedObjects = [];
+        this.deletedObjects = [];
+        this.strategy = strategy;
+    }
+    UnitOfWork.prototype.registerNew = function (info, obj) {
+        var tracker = new TrackedObject(info, obj, this.getProxy(info, obj));
+        this.newObjects.push(tracker);
+        return tracker.Proxy;
+    };
+    UnitOfWork.prototype.registerFetched = function (info, obj) {
+        var tracker = new TrackedObject(info, obj, this.getProxy(info, obj));
+        this.fetchedObjects.push(tracker);
+        return tracker.Proxy;
+    };
+    UnitOfWork.prototype.registerDirty = function (info, obj) {
+        var tracker = new TrackedObject(info, obj, this.getProxy(info, obj));
+        this.dirtyObjects.push(tracker);
+        return tracker.Proxy;
+    };
+    UnitOfWork.prototype.registerDeleted = function (info, obj) {
+        var tracker = new TrackedObject(info, obj, this.getProxy(info, obj));
+        this.deletedObjects.push(tracker);
+        return tracker.Proxy;
+    };
+    UnitOfWork.prototype.commit = function () {
+        var strategy = this.strategy;
+        this.newObjects.forEach(function (obj) {
+            strategy.create(obj.Info, obj.Object);
+        });
+        this.dirtyObjects.forEach(function (obj) {
+            strategy.update(obj.Info, obj.Object);
+        });
+        this.deletedObjects.forEach(function (obj) {
+            strategy.delete(obj.Info, obj.Object);
+        });
+    };
+    UnitOfWork.prototype.rollback = function () {
+    };
+    UnitOfWork.prototype.getProxy = function (info, obj) {
+        var setters = {};
+        function modificationHandler(info, target, name, value) {
+            this.registerDirty(info, target);
+            target[name] = value;
+        }
+        for (var name in obj) {
+            setters[name] = { set: modificationHandler.bind(this, info, obj, name) };
+        }
+        return new Proxy(obj, setters);
+    };
+    return UnitOfWork;
+})();
+module.exports = UnitOfWork;
+
+
+},{"./Proxy":4}],7:[function(require,module,exports){
+var EntityConfig = require('./EntityConfig');
+var EntityInfo = require('./EntityInfo');
+var Repository = require('./Repository');
+var Proxy = require('./Proxy');
+var UnitOfWork = require('./UnitOfWork');
+var InMemoryStrategy = require('./PersistenceStrategy/InMemoryStrategy');
+var Talaria = (function () {
+    function Talaria() {
+        this.defaultStrategy = new InMemoryStrategy();
+        this.unitOfWork = new UnitOfWork(this.defaultStrategy);
+        this.entities = {};
+        this.repositories = {};
+    }
+    Talaria.getInstance = function () {
+        if (!Talaria.instance) {
+            Talaria.instance = new Talaria();
+        }
+        return Talaria.instance;
+    };
+    Object.defineProperty(Talaria.prototype, "DefaultStrategy", {
+        get: function () {
+            return this.defaultStrategy;
+        },
+        /*
+            Probably this should be removed and moved setting default strategy
+            should be done in constructor
+         */
+        set: function (value) {
+            this.defaultStrategy = value;
+            this.unitOfWork = new UnitOfWork(value);
+        },
+        enumerable: true,
+        configurable: true
+    });
+    Object.defineProperty(Talaria.prototype, "DefaultUnitOfWork", {
+        get: function () {
+            return this.unitOfWork;
+        },
+        enumerable: true,
+        configurable: true
+    });
+    Talaria.prototype.registerEntity = function (constructor, config) {
+        this.entities[config.name] = new EntityInfo(constructor, config);
+    };
+    Talaria.prototype.getEntityInfo = function (name) {
+        return this.entities[name];
+    };
+    Talaria.prototype.getRepository = function (name) {
+        if (!this.repositories[name]) {
+            this.repositories[name] = new Repository(this.getEntityInfo(name), this.unitOfWork, this.defaultStrategy);
+        }
+        return this.repositories[name];
+    };
+    Talaria.EntityInfo = EntityInfo;
+    Talaria.EntityConfig = EntityConfig;
+    Talaria.Proxy = Proxy;
+    Talaria.Repository = Repository;
+    Talaria.UnitOfWork = UnitOfWork;
+    return Talaria;
+})();
+module.exports = Talaria;
+
+},{"./EntityConfig":1,"./EntityInfo":2,"./PersistenceStrategy/InMemoryStrategy":3,"./Proxy":4,"./Repository":5,"./UnitOfWork":6}],8:[function(require,module,exports){
 (function (process,global){
 /*!
  * @overview es6-promise - a tiny implementation of Promises/A+.
@@ -1022,7 +1340,7 @@ module.exports = Repository;
     }
 }).call(this);
 }).call(this,require("1YiZ5S"),typeof self !== "undefined" ? self : typeof window !== "undefined" ? window : {})
-},{"1YiZ5S":3}],3:[function(require,module,exports){
+},{"1YiZ5S":9}],9:[function(require,module,exports){
 // shim for using process in browser
 
 var process = module.exports = {};
@@ -1087,5 +1405,5 @@ process.chdir = function (dir) {
     throw new Error('process.chdir is not supported');
 };
 
-},{}]},{},[1])
-//# sourceMappingURL=data:application/json;base64,eyJ2ZXJzaW9uIjozLCJzb3VyY2VzIjpbIlJlcG9zaXRvcnkudHMiXSwibmFtZXMiOlsiUmVwb3NpdG9yeSIsIlJlcG9zaXRvcnkuY29uc3RydWN0b3IiLCJSZXBvc2l0b3J5LmFkZCIsIlJlcG9zaXRvcnkucmVtb3ZlIiwiUmVwb3NpdG9yeS5maW5kT25lIiwiUmVwb3NpdG9yeS5maW5kQWxsIiwiUmVwb3NpdG9yeS5oYXMiXSwibWFwcGluZ3MiOiJBQUlBLElBQU8sSUFBSSxXQUFXLGFBQWEsQ0FBQyxDQUFDO0FBQ3JDLElBQU8sT0FBTyxHQUFHLElBQUksQ0FBQyxPQUFPLENBQUM7QUFFOUIsSUFBTSxVQUFVO0lBUWZBLFNBUktBLFVBQVVBLENBUUZBLFVBQXFCQSxFQUFFQSxVQUFxQkEsRUFBRUEsbUJBQXdDQTtRQUZ4RkMsVUFBS0EsR0FBT0EsRUFBRUEsQ0FBQ0E7UUFHbkJBLElBQUlBLENBQUNBLFVBQVVBLEdBQUdBLFVBQVVBLENBQUNBO1FBQzdCQSxJQUFJQSxDQUFDQSxVQUFVQSxHQUFHQSxVQUFVQSxDQUFDQTtRQUM3QkEsSUFBSUEsQ0FBQ0EsbUJBQW1CQSxHQUFHQSxtQkFBbUJBLENBQUNBO0lBQ3REQSxDQUFDQTtJQUNNRCx3QkFBR0EsR0FBVkEsVUFBV0EsR0FBTUE7UUFBakJFLGlCQU1JQTtRQUxHQSxNQUFNQSxDQUFDQSxJQUFJQSxPQUFPQSxDQUFJQSxVQUFDQSxPQUFPQSxFQUFFQSxNQUFNQTtZQUNsQ0EsSUFBSUEsVUFBVUEsR0FBUUEsS0FBSUEsQ0FBQ0EsVUFBVUEsQ0FBQ0EsV0FBV0EsQ0FBQ0EsS0FBSUEsQ0FBQ0EsVUFBVUEsRUFBRUEsR0FBR0EsQ0FBQ0EsQ0FBQ0E7WUFDeEVBLEtBQUlBLENBQUNBLEtBQUtBLENBQUNBLElBQUlBLENBQUNBLFVBQVVBLENBQUNBLENBQUNBO1lBQzVCQSxPQUFPQSxDQUFDQSxVQUFVQSxDQUFDQSxDQUFDQTtRQUN4QkEsQ0FBQ0EsQ0FBQ0EsQ0FBQ0E7SUFDUEEsQ0FBQ0E7SUFDR0YsMkJBQU1BLEdBQWJBLFVBQWNBLEdBQU9BO1FBQXJCRyxpQkFPSUE7UUFOR0EsTUFBTUEsQ0FBQ0EsSUFBSUEsQ0FBQ0EsR0FBR0EsQ0FBQ0EsR0FBR0EsQ0FBQ0EsQ0FBQ0EsSUFBSUEsQ0FBQ0EsVUFBQ0EsTUFBZ0JBO1lBQ3ZDQSxFQUFFQSxDQUFBQSxDQUFDQSxNQUFNQSxDQUFDQSxDQUFDQSxDQUFDQTtnQkFDUkEsS0FBSUEsQ0FBQ0EsS0FBS0EsQ0FBQ0EsTUFBTUEsQ0FBQ0EsS0FBSUEsQ0FBQ0EsS0FBS0EsQ0FBQ0EsT0FBT0EsQ0FBQ0EsR0FBR0EsQ0FBQ0EsRUFBRUEsQ0FBQ0EsQ0FBQ0EsQ0FBQ0E7Z0JBQzlDQSxLQUFJQSxDQUFDQSxVQUFVQSxDQUFDQSxlQUFlQSxDQUFDQSxLQUFJQSxDQUFDQSxVQUFVQSxFQUFFQSxHQUFHQSxDQUFDQSxDQUFDQTtZQUMxREEsQ0FBQ0E7UUFDTEEsQ0FBQ0EsQ0FBQ0EsQ0FBQ0E7SUFDUEEsQ0FBQ0E7SUFDR0gsNEJBQU9BLEdBQWRBO1FBQ09JLE1BQU1BLElBQUlBLEtBQUtBLENBQUNBLHFCQUFxQkEsQ0FBQ0EsQ0FBQ0E7SUFDM0NBLENBQUNBO0lBQ01KLDRCQUFPQSxHQUFkQTtRQUFBSyxpQkFTQ0E7UUFSR0EsTUFBTUEsQ0FBQ0EsSUFBSUEsQ0FBQ0EsbUJBQW1CQSxDQUFDQSxJQUFJQSxDQUFDQSxJQUFJQSxDQUFDQSxVQUFVQSxFQUFFQSxJQUFJQSxDQUFDQSxDQUFDQSxJQUFJQSxDQUFDQSxVQUFDQSxLQUFVQTtZQUN4RUEsS0FBS0EsQ0FBQ0EsT0FBT0EsQ0FBQ0EsVUFBQ0EsSUFBSUE7Z0JBQ2ZBLEVBQUVBLENBQUFBLENBQUNBLEtBQUlBLENBQUNBLEtBQUtBLENBQUNBLE9BQU9BLENBQUNBLElBQUlBLENBQUNBLElBQUlBLENBQUNBLENBQUNBLENBQUNBLENBQUNBLENBQUNBO29CQUNoQ0EsS0FBSUEsQ0FBQ0EsS0FBS0EsQ0FBQ0EsSUFBSUEsQ0FBQ0EsSUFBSUEsQ0FBQ0EsQ0FBQ0E7Z0JBQzFCQSxDQUFDQTtZQUNMQSxDQUFDQSxDQUFDQSxDQUFDQTtZQUNIQSxNQUFNQSxDQUFDQSxLQUFJQSxDQUFDQSxLQUFLQSxDQUFDQSxLQUFLQSxFQUFFQSxDQUFDQTtRQUM5QkEsQ0FBQ0EsQ0FBQ0EsQ0FBQ0E7SUFDUEEsQ0FBQ0E7SUFDR0wsd0JBQUdBLEdBQVZBLFVBQVdBLEdBQU1BO1FBQWpCTSxpQkFhSUE7UUFaR0EsTUFBTUEsQ0FBQ0EsSUFBSUEsT0FBT0EsQ0FBVUEsVUFBQ0EsT0FBT0EsRUFBRUEsTUFBTUE7WUFDeENBLEVBQUVBLENBQUNBLENBQUNBLEtBQUlBLENBQUNBLEtBQUtBLENBQUNBLE9BQU9BLENBQUNBLEdBQUdBLENBQUNBLEdBQUdBLENBQUNBLENBQUNBLENBQUNBLENBQUNBLENBQUNBO2dCQUMvQkEsT0FBT0EsQ0FBQ0EsSUFBSUEsQ0FBQ0EsQ0FBQ0E7WUFDbEJBLENBQUNBO1lBQUNBLElBQUlBLENBQUNBLENBQUNBO2dCQUNKQSxLQUFJQSxDQUFDQSxtQkFBbUJBLENBQUNBLElBQUlBLENBQUNBLEtBQUlBLENBQUNBLFVBQVVBLEVBQUVBLEdBQUdBLENBQUNBLENBQUNBLElBQUlBLENBQUNBLFVBQUNBLEtBQUtBO29CQUMzREEsS0FBS0EsQ0FBQ0EsT0FBT0EsQ0FBQ0EsVUFBVUEsSUFBSUE7d0JBQ3hCLElBQUksQ0FBQyxLQUFLLENBQUMsSUFBSSxDQUFDLElBQUksQ0FBQyxDQUFDO29CQUMxQixDQUFDLENBQUNBLENBQUNBO29CQUNIQSxPQUFPQSxDQUFDQSxLQUFLQSxDQUFDQSxNQUFNQSxHQUFHQSxDQUFDQSxDQUFDQSxDQUFDQTtnQkFDOUJBLENBQUNBLENBQUNBLENBQUNBO1lBQ1BBLENBQUNBO1FBQ0xBLENBQUNBLENBQUNBLENBQUNBO0lBQ1BBLENBQUNBO0lBQ0xOLGlCQUFDQTtBQUFEQSxDQXZEQSxBQXVEQ0EsSUFBQTtBQUVELEFBQW9CLGlCQUFYLFVBQVUsQ0FBQyIsImZpbGUiOiJSZXBvc2l0b3J5LmpzIiwic291cmNlUm9vdCI6Ii9ob21lL2thcGtlL3Byb2plY3RzL3RhbGFyaWEvIiwic291cmNlc0NvbnRlbnQiOltdfQ==
+},{}]},{},[7])
+//# sourceMappingURL=data:application/json;base64,eyJ2ZXJzaW9uIjozLCJzb3VyY2VzIjpbIlRhbGFyaWEudHMiXSwibmFtZXMiOlsiVGFsYXJpYSIsIlRhbGFyaWEuY29uc3RydWN0b3IiLCJUYWxhcmlhLmdldEluc3RhbmNlIiwiVGFsYXJpYS5EZWZhdWx0U3RyYXRlZ3kiLCJUYWxhcmlhLkRlZmF1bHRVbml0T2ZXb3JrIiwiVGFsYXJpYS5yZWdpc3RlckVudGl0eSIsIlRhbGFyaWEuZ2V0RW50aXR5SW5mbyIsIlRhbGFyaWEuZ2V0UmVwb3NpdG9yeSJdLCJtYXBwaW5ncyI6IkFBQUEsSUFBTyxZQUFZLFdBQVcsZ0JBQWdCLENBQUMsQ0FBQztBQUNoRCxJQUFPLFVBQVUsV0FBVyxjQUFjLENBQUMsQ0FBQztBQUM1QyxJQUFPLFVBQVUsV0FBVyxjQUFjLENBQUMsQ0FBQztBQUM1QyxJQUFPLEtBQUssV0FBVyxTQUFTLENBQUMsQ0FBQztBQUNsQyxJQUFPLFVBQVUsV0FBVyxjQUFjLENBQUMsQ0FBQztBQUc1QyxJQUFPLGdCQUFnQixXQUFXLHdDQUF3QyxDQUFDLENBQUM7QUFFNUUsSUFBTSxPQUFPO0lBQWJBLFNBQU1BLE9BQU9BO1FBZ0JEQyxvQkFBZUEsR0FBeUJBLElBQUlBLGdCQUFnQkEsRUFBRUEsQ0FBQ0E7UUFDL0RBLGVBQVVBLEdBQWdCQSxJQUFJQSxVQUFVQSxDQUFDQSxJQUFJQSxDQUFDQSxlQUFlQSxDQUFDQSxDQUFDQTtRQUMvREEsYUFBUUEsR0FBZ0NBLEVBQUVBLENBQUNBO1FBQzNDQSxpQkFBWUEsR0FBcUNBLEVBQUVBLENBQUNBO0lBaUNoRUEsQ0FBQ0E7SUEzQ2lCRCxtQkFBV0EsR0FBekJBO1FBQ0lFLEVBQUVBLENBQUFBLENBQUNBLENBQUNBLE9BQU9BLENBQUNBLFFBQVFBLENBQUNBLENBQUNBLENBQUNBO1lBQ25CQSxPQUFPQSxDQUFDQSxRQUFRQSxHQUFHQSxJQUFJQSxPQUFPQSxFQUFFQSxDQUFDQTtRQUNyQ0EsQ0FBQ0E7UUFDREEsTUFBTUEsQ0FBQ0EsT0FBT0EsQ0FBQ0EsUUFBUUEsQ0FBQ0E7SUFDNUJBLENBQUNBO0lBT0RGLHNCQUFJQSxvQ0FBZUE7YUFBbkJBO1lBQ0lHLE1BQU1BLENBQUNBLElBQUlBLENBQUNBLGVBQWVBLENBQUNBO1FBQ2hDQSxDQUFDQTtRQUVESDs7O1dBR0dBO2FBQ0hBLFVBQW9CQSxLQUF5QkE7WUFDekNHLElBQUlBLENBQUNBLGVBQWVBLEdBQUdBLEtBQUtBLENBQUNBO1lBQzdCQSxJQUFJQSxDQUFDQSxVQUFVQSxHQUFHQSxJQUFJQSxVQUFVQSxDQUFDQSxLQUFLQSxDQUFDQSxDQUFDQTtRQUM1Q0EsQ0FBQ0E7OztPQVRBSDtJQVdEQSxzQkFBSUEsc0NBQWlCQTthQUFyQkE7WUFDSUksTUFBTUEsQ0FBQ0EsSUFBSUEsQ0FBQ0EsVUFBVUEsQ0FBQ0E7UUFDM0JBLENBQUNBOzs7T0FBQUo7SUFFTUEsZ0NBQWNBLEdBQXJCQSxVQUF1QkEsV0FBZUEsRUFBRUEsTUFBbUJBO1FBQ3ZESyxJQUFJQSxDQUFDQSxRQUFRQSxDQUFDQSxNQUFNQSxDQUFDQSxJQUFJQSxDQUFDQSxHQUFHQSxJQUFJQSxVQUFVQSxDQUFDQSxXQUFXQSxFQUFFQSxNQUFNQSxDQUFDQSxDQUFDQTtJQUNyRUEsQ0FBQ0E7SUFFTUwsK0JBQWFBLEdBQXBCQSxVQUFzQkEsSUFBV0E7UUFDN0JNLE1BQU1BLENBQUNBLElBQUlBLENBQUNBLFFBQVFBLENBQUNBLElBQUlBLENBQUNBLENBQUNBO0lBQy9CQSxDQUFDQTtJQUVNTiwrQkFBYUEsR0FBcEJBLFVBQXlCQSxJQUFXQTtRQUNoQ08sRUFBRUEsQ0FBQUEsQ0FBQ0EsQ0FBQ0EsSUFBSUEsQ0FBQ0EsWUFBWUEsQ0FBQ0EsSUFBSUEsQ0FBQ0EsQ0FBQ0EsQ0FBQ0EsQ0FBQ0E7WUFDMUJBLElBQUlBLENBQUNBLFlBQVlBLENBQUNBLElBQUlBLENBQUNBLEdBQUdBLElBQUlBLFVBQVVBLENBQUlBLElBQUlBLENBQUNBLGFBQWFBLENBQUNBLElBQUlBLENBQUNBLEVBQUVBLElBQUlBLENBQUNBLFVBQVVBLEVBQUVBLElBQUlBLENBQUNBLGVBQWVBLENBQUNBLENBQUNBO1FBQ2pIQSxDQUFDQTtRQUNEQSxNQUFNQSxDQUFDQSxJQUFJQSxDQUFDQSxZQUFZQSxDQUFDQSxJQUFJQSxDQUFDQSxDQUFDQTtJQUNuQ0EsQ0FBQ0E7SUFsRGFQLGtCQUFVQSxHQUFHQSxVQUFVQSxDQUFDQTtJQUN4QkEsb0JBQVlBLEdBQUdBLFlBQVlBLENBQUNBO0lBQzVCQSxhQUFLQSxHQUFHQSxLQUFLQSxDQUFDQTtJQUNkQSxrQkFBVUEsR0FBR0EsVUFBVUEsQ0FBQ0E7SUFDeEJBLGtCQUFVQSxHQUFHQSxVQUFVQSxDQUFDQTtJQStDMUNBLGNBQUNBO0FBQURBLENBcERBLEFBb0RDQSxJQUFBO0FBRUQsQUFBaUIsaUJBQVIsT0FBTyxDQUFDIiwiZmlsZSI6IlRhbGFyaWEuanMiLCJzb3VyY2VSb290IjoiL2hvbWUva2Fwa2UvcHJvamVjdHMvdGFsYXJpYS8iLCJzb3VyY2VzQ29udGVudCI6W119

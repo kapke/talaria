@@ -48,6 +48,12 @@ module.exports = function strategySpec(strategyName, strategyFactory) {
                 });
             });
         });
+        it('should find all stored objects when passing null as criteria', function (done) {
+            strategy.find(info, null).then(function (received) {
+                expect(received).toEqual([obj]);
+                done();
+            });
+        });
     });
 };
 //# sourceMappingURL=PersistenceStrategySpec.js.map

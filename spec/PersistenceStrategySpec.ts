@@ -56,5 +56,11 @@ module.exports = function strategySpec (strategyName : String, strategyFactory :
                 });
             });
         });
+        it('should find all stored objects when passing null as criteria', (done) => {
+           strategy.find(info, null).then((received) => {
+                expect(received).toEqual([obj]);
+                done();
+           });
+        });
     });
 };
