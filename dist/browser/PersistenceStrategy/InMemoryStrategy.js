@@ -1,32 +1,35 @@
 (function e(t,n,r){function s(o,u){if(!n[o]){if(!t[o]){var a=typeof require=="function"&&require;if(!u&&a)return a(o,!0);if(i)return i(o,!0);throw new Error("Cannot find module '"+o+"'")}var f=n[o]={exports:{}};t[o][0].call(f.exports,function(e){var n=t[o][1][e];return s(n?n:e)},f,f.exports,e,t,n,r)}return n[o].exports}var i=typeof require=="function"&&require;for(var o=0;o<r.length;o++)s(r[o]);return s})({1:[function(require,module,exports){
 ///<reference path="../../typings/es6-promise/es6-promise.d.ts" />
 ///<reference path="../../typings/node/node.d.ts" />
-var rsvp = require('es6-promise');
-var Promise = rsvp.Promise;
+var es6_promise_1 = require('es6-promise');
 var InMemoryStrategy = (function () {
     function InMemoryStrategy() {
         this.objects = {};
     }
     InMemoryStrategy.prototype.create = function (info, obj) {
         var _this = this;
-        return new Promise(function (resolve, reject) {
+        return new es6_promise_1.Promise(function (resolve, reject) {
             _this.objects[info.config.name] = _this.objects[info.config.name] || [];
             _this.objects[info.config.name].push(obj);
             resolve();
         });
     };
     InMemoryStrategy.prototype.update = function (info, obj) {
-        return this.findByKey(info, obj).then(function (found) {
-            for (var name in found) {
-                found[name] = obj[name];
-            }
+        var _this = this;
+        return new es6_promise_1.Promise(function (resolve) {
+            _this.findByKey(info, obj).then(function (found) {
+                for (var name in found) {
+                    found[name] = obj[name];
+                }
+                resolve();
+            });
         });
     };
     InMemoryStrategy.prototype.delete = function (info, obj) {
         var _this = this;
         var collection = this.getCollection(info);
         var resolved = false;
-        return new Promise(function (resolve, reject) {
+        return new es6_promise_1.Promise(function (resolve, reject) {
             for (var i = 0; i < collection.length; i++) {
                 if (_this.matchesKey(info, obj, collection[i])) {
                     collection.splice(i, 1);
@@ -41,9 +44,7 @@ var InMemoryStrategy = (function () {
     };
     InMemoryStrategy.prototype.find = function (info, criteria) {
         var _this = this;
-        function allFilter(obj) {
-            return true;
-        }
+        function allFilter(obj) { return true; }
         function strictFilter(obj) {
             for (var name in criteria) {
                 if (obj[name] != criteria[name]) {
@@ -52,7 +53,7 @@ var InMemoryStrategy = (function () {
             }
             return true;
         }
-        return new Promise(function (resolve, reject) {
+        return new es6_promise_1.Promise(function (resolve, reject) {
             var collection = _this.getCollection(info), filter;
             if (criteria == null) {
                 filter = allFilter;
@@ -66,7 +67,7 @@ var InMemoryStrategy = (function () {
     InMemoryStrategy.prototype.findByKey = function (info, keyValue) {
         var _this = this;
         var collection = this.getCollection(info);
-        return new Promise(function (resolve, reject) {
+        return new es6_promise_1.Promise(function (resolve, reject) {
             for (var i = 0; i < collection.length; i++) {
                 if (_this.matchesKey(info, keyValue, collection[i])) {
                     resolve(collection[i]);
@@ -92,7 +93,7 @@ var InMemoryStrategy = (function () {
     };
     return InMemoryStrategy;
 })();
-module.exports = InMemoryStrategy;
+exports.default = InMemoryStrategy;
 
 },{"es6-promise":2}],2:[function(require,module,exports){
 (function (process,global){
@@ -101,81 +102,84 @@ module.exports = InMemoryStrategy;
  * @copyright Copyright (c) 2014 Yehuda Katz, Tom Dale, Stefan Penner and contributors (Conversion to ES6 API by Jake Archibald)
  * @license   Licensed under MIT license
  *            See https://raw.githubusercontent.com/jakearchibald/es6-promise/master/LICENSE
- * @version   2.0.1
+ * @version   2.1.1
  */
 
 (function() {
     "use strict";
-
-    function $$utils$$objectOrFunction(x) {
+    function lib$es6$promise$utils$$objectOrFunction(x) {
       return typeof x === 'function' || (typeof x === 'object' && x !== null);
     }
 
-    function $$utils$$isFunction(x) {
+    function lib$es6$promise$utils$$isFunction(x) {
       return typeof x === 'function';
     }
 
-    function $$utils$$isMaybeThenable(x) {
+    function lib$es6$promise$utils$$isMaybeThenable(x) {
       return typeof x === 'object' && x !== null;
     }
 
-    var $$utils$$_isArray;
-
+    var lib$es6$promise$utils$$_isArray;
     if (!Array.isArray) {
-      $$utils$$_isArray = function (x) {
+      lib$es6$promise$utils$$_isArray = function (x) {
         return Object.prototype.toString.call(x) === '[object Array]';
       };
     } else {
-      $$utils$$_isArray = Array.isArray;
+      lib$es6$promise$utils$$_isArray = Array.isArray;
     }
 
-    var $$utils$$isArray = $$utils$$_isArray;
-    var $$utils$$now = Date.now || function() { return new Date().getTime(); };
-    function $$utils$$F() { }
-
-    var $$utils$$o_create = (Object.create || function (o) {
-      if (arguments.length > 1) {
-        throw new Error('Second argument not supported');
-      }
-      if (typeof o !== 'object') {
-        throw new TypeError('Argument must be an object');
-      }
-      $$utils$$F.prototype = o;
-      return new $$utils$$F();
-    });
-
-    var $$asap$$len = 0;
-
-    var $$asap$$default = function asap(callback, arg) {
-      $$asap$$queue[$$asap$$len] = callback;
-      $$asap$$queue[$$asap$$len + 1] = arg;
-      $$asap$$len += 2;
-      if ($$asap$$len === 2) {
-        // If len is 1, that means that we need to schedule an async flush.
+    var lib$es6$promise$utils$$isArray = lib$es6$promise$utils$$_isArray;
+    var lib$es6$promise$asap$$len = 0;
+    var lib$es6$promise$asap$$toString = {}.toString;
+    var lib$es6$promise$asap$$vertxNext;
+    function lib$es6$promise$asap$$asap(callback, arg) {
+      lib$es6$promise$asap$$queue[lib$es6$promise$asap$$len] = callback;
+      lib$es6$promise$asap$$queue[lib$es6$promise$asap$$len + 1] = arg;
+      lib$es6$promise$asap$$len += 2;
+      if (lib$es6$promise$asap$$len === 2) {
+        // If len is 2, that means that we need to schedule an async flush.
         // If additional callbacks are queued before the queue is flushed, they
         // will be processed by this flush that we are scheduling.
-        $$asap$$scheduleFlush();
+        lib$es6$promise$asap$$scheduleFlush();
       }
-    };
+    }
 
-    var $$asap$$browserGlobal = (typeof window !== 'undefined') ? window : {};
-    var $$asap$$BrowserMutationObserver = $$asap$$browserGlobal.MutationObserver || $$asap$$browserGlobal.WebKitMutationObserver;
+    var lib$es6$promise$asap$$default = lib$es6$promise$asap$$asap;
+
+    var lib$es6$promise$asap$$browserWindow = (typeof window !== 'undefined') ? window : undefined;
+    var lib$es6$promise$asap$$browserGlobal = lib$es6$promise$asap$$browserWindow || {};
+    var lib$es6$promise$asap$$BrowserMutationObserver = lib$es6$promise$asap$$browserGlobal.MutationObserver || lib$es6$promise$asap$$browserGlobal.WebKitMutationObserver;
+    var lib$es6$promise$asap$$isNode = typeof process !== 'undefined' && {}.toString.call(process) === '[object process]';
 
     // test for web worker but not in IE10
-    var $$asap$$isWorker = typeof Uint8ClampedArray !== 'undefined' &&
+    var lib$es6$promise$asap$$isWorker = typeof Uint8ClampedArray !== 'undefined' &&
       typeof importScripts !== 'undefined' &&
       typeof MessageChannel !== 'undefined';
 
     // node
-    function $$asap$$useNextTick() {
+    function lib$es6$promise$asap$$useNextTick() {
+      var nextTick = process.nextTick;
+      // node version 0.10.x displays a deprecation warning when nextTick is used recursively
+      // setImmediate should be used instead instead
+      var version = process.versions.node.match(/^(?:(\d+)\.)?(?:(\d+)\.)?(\*|\d+)$/);
+      if (Array.isArray(version) && version[1] === '0' && version[2] === '10') {
+        nextTick = setImmediate;
+      }
       return function() {
-        process.nextTick($$asap$$flush);
+        nextTick(lib$es6$promise$asap$$flush);
       };
     }
 
-    function $$asap$$useMutationObserver() {
+    // vertx
+    function lib$es6$promise$asap$$useVertxTimer() {
+      return function() {
+        lib$es6$promise$asap$$vertxNext(lib$es6$promise$asap$$flush);
+      };
+    }
+
+    function lib$es6$promise$asap$$useMutationObserver() {
       var iterations = 0;
-      var observer = new $$asap$$BrowserMutationObserver($$asap$$flush);
+      var observer = new lib$es6$promise$asap$$BrowserMutationObserver(lib$es6$promise$asap$$flush);
       var node = document.createTextNode('');
       observer.observe(node, { characterData: true });
 
@@ -185,73 +189,86 @@ module.exports = InMemoryStrategy;
     }
 
     // web worker
-    function $$asap$$useMessageChannel() {
+    function lib$es6$promise$asap$$useMessageChannel() {
       var channel = new MessageChannel();
-      channel.port1.onmessage = $$asap$$flush;
+      channel.port1.onmessage = lib$es6$promise$asap$$flush;
       return function () {
         channel.port2.postMessage(0);
       };
     }
 
-    function $$asap$$useSetTimeout() {
+    function lib$es6$promise$asap$$useSetTimeout() {
       return function() {
-        setTimeout($$asap$$flush, 1);
+        setTimeout(lib$es6$promise$asap$$flush, 1);
       };
     }
 
-    var $$asap$$queue = new Array(1000);
-
-    function $$asap$$flush() {
-      for (var i = 0; i < $$asap$$len; i+=2) {
-        var callback = $$asap$$queue[i];
-        var arg = $$asap$$queue[i+1];
+    var lib$es6$promise$asap$$queue = new Array(1000);
+    function lib$es6$promise$asap$$flush() {
+      for (var i = 0; i < lib$es6$promise$asap$$len; i+=2) {
+        var callback = lib$es6$promise$asap$$queue[i];
+        var arg = lib$es6$promise$asap$$queue[i+1];
 
         callback(arg);
 
-        $$asap$$queue[i] = undefined;
-        $$asap$$queue[i+1] = undefined;
+        lib$es6$promise$asap$$queue[i] = undefined;
+        lib$es6$promise$asap$$queue[i+1] = undefined;
       }
 
-      $$asap$$len = 0;
+      lib$es6$promise$asap$$len = 0;
     }
 
-    var $$asap$$scheduleFlush;
+    function lib$es6$promise$asap$$attemptVertex() {
+      try {
+        var r = require;
+        var vertx = r('vertx');
+        lib$es6$promise$asap$$vertxNext = vertx.runOnLoop || vertx.runOnContext;
+        return lib$es6$promise$asap$$useVertxTimer();
+      } catch(e) {
+        return lib$es6$promise$asap$$useSetTimeout();
+      }
+    }
 
+    var lib$es6$promise$asap$$scheduleFlush;
     // Decide what async method to use to triggering processing of queued callbacks:
-    if (typeof process !== 'undefined' && {}.toString.call(process) === '[object process]') {
-      $$asap$$scheduleFlush = $$asap$$useNextTick();
-    } else if ($$asap$$BrowserMutationObserver) {
-      $$asap$$scheduleFlush = $$asap$$useMutationObserver();
-    } else if ($$asap$$isWorker) {
-      $$asap$$scheduleFlush = $$asap$$useMessageChannel();
+    if (lib$es6$promise$asap$$isNode) {
+      lib$es6$promise$asap$$scheduleFlush = lib$es6$promise$asap$$useNextTick();
+    } else if (lib$es6$promise$asap$$BrowserMutationObserver) {
+      lib$es6$promise$asap$$scheduleFlush = lib$es6$promise$asap$$useMutationObserver();
+    } else if (lib$es6$promise$asap$$isWorker) {
+      lib$es6$promise$asap$$scheduleFlush = lib$es6$promise$asap$$useMessageChannel();
+    } else if (lib$es6$promise$asap$$browserWindow === undefined && typeof require === 'function') {
+      lib$es6$promise$asap$$scheduleFlush = lib$es6$promise$asap$$attemptVertex();
     } else {
-      $$asap$$scheduleFlush = $$asap$$useSetTimeout();
+      lib$es6$promise$asap$$scheduleFlush = lib$es6$promise$asap$$useSetTimeout();
     }
 
-    function $$$internal$$noop() {}
-    var $$$internal$$PENDING   = void 0;
-    var $$$internal$$FULFILLED = 1;
-    var $$$internal$$REJECTED  = 2;
-    var $$$internal$$GET_THEN_ERROR = new $$$internal$$ErrorObject();
+    function lib$es6$promise$$internal$$noop() {}
 
-    function $$$internal$$selfFullfillment() {
+    var lib$es6$promise$$internal$$PENDING   = void 0;
+    var lib$es6$promise$$internal$$FULFILLED = 1;
+    var lib$es6$promise$$internal$$REJECTED  = 2;
+
+    var lib$es6$promise$$internal$$GET_THEN_ERROR = new lib$es6$promise$$internal$$ErrorObject();
+
+    function lib$es6$promise$$internal$$selfFullfillment() {
       return new TypeError("You cannot resolve a promise with itself");
     }
 
-    function $$$internal$$cannotReturnOwn() {
-      return new TypeError('A promises callback cannot return that same promise.')
+    function lib$es6$promise$$internal$$cannotReturnOwn() {
+      return new TypeError('A promises callback cannot return that same promise.');
     }
 
-    function $$$internal$$getThen(promise) {
+    function lib$es6$promise$$internal$$getThen(promise) {
       try {
         return promise.then;
       } catch(error) {
-        $$$internal$$GET_THEN_ERROR.error = error;
-        return $$$internal$$GET_THEN_ERROR;
+        lib$es6$promise$$internal$$GET_THEN_ERROR.error = error;
+        return lib$es6$promise$$internal$$GET_THEN_ERROR;
       }
     }
 
-    function $$$internal$$tryThen(then, value, fulfillmentHandler, rejectionHandler) {
+    function lib$es6$promise$$internal$$tryThen(then, value, fulfillmentHandler, rejectionHandler) {
       try {
         then.call(value, fulfillmentHandler, rejectionHandler);
       } catch(e) {
@@ -259,117 +276,116 @@ module.exports = InMemoryStrategy;
       }
     }
 
-    function $$$internal$$handleForeignThenable(promise, thenable, then) {
-       $$asap$$default(function(promise) {
+    function lib$es6$promise$$internal$$handleForeignThenable(promise, thenable, then) {
+       lib$es6$promise$asap$$default(function(promise) {
         var sealed = false;
-        var error = $$$internal$$tryThen(then, thenable, function(value) {
+        var error = lib$es6$promise$$internal$$tryThen(then, thenable, function(value) {
           if (sealed) { return; }
           sealed = true;
           if (thenable !== value) {
-            $$$internal$$resolve(promise, value);
+            lib$es6$promise$$internal$$resolve(promise, value);
           } else {
-            $$$internal$$fulfill(promise, value);
+            lib$es6$promise$$internal$$fulfill(promise, value);
           }
         }, function(reason) {
           if (sealed) { return; }
           sealed = true;
 
-          $$$internal$$reject(promise, reason);
+          lib$es6$promise$$internal$$reject(promise, reason);
         }, 'Settle: ' + (promise._label || ' unknown promise'));
 
         if (!sealed && error) {
           sealed = true;
-          $$$internal$$reject(promise, error);
+          lib$es6$promise$$internal$$reject(promise, error);
         }
       }, promise);
     }
 
-    function $$$internal$$handleOwnThenable(promise, thenable) {
-      if (thenable._state === $$$internal$$FULFILLED) {
-        $$$internal$$fulfill(promise, thenable._result);
-      } else if (promise._state === $$$internal$$REJECTED) {
-        $$$internal$$reject(promise, thenable._result);
+    function lib$es6$promise$$internal$$handleOwnThenable(promise, thenable) {
+      if (thenable._state === lib$es6$promise$$internal$$FULFILLED) {
+        lib$es6$promise$$internal$$fulfill(promise, thenable._result);
+      } else if (thenable._state === lib$es6$promise$$internal$$REJECTED) {
+        lib$es6$promise$$internal$$reject(promise, thenable._result);
       } else {
-        $$$internal$$subscribe(thenable, undefined, function(value) {
-          $$$internal$$resolve(promise, value);
+        lib$es6$promise$$internal$$subscribe(thenable, undefined, function(value) {
+          lib$es6$promise$$internal$$resolve(promise, value);
         }, function(reason) {
-          $$$internal$$reject(promise, reason);
+          lib$es6$promise$$internal$$reject(promise, reason);
         });
       }
     }
 
-    function $$$internal$$handleMaybeThenable(promise, maybeThenable) {
+    function lib$es6$promise$$internal$$handleMaybeThenable(promise, maybeThenable) {
       if (maybeThenable.constructor === promise.constructor) {
-        $$$internal$$handleOwnThenable(promise, maybeThenable);
+        lib$es6$promise$$internal$$handleOwnThenable(promise, maybeThenable);
       } else {
-        var then = $$$internal$$getThen(maybeThenable);
+        var then = lib$es6$promise$$internal$$getThen(maybeThenable);
 
-        if (then === $$$internal$$GET_THEN_ERROR) {
-          $$$internal$$reject(promise, $$$internal$$GET_THEN_ERROR.error);
+        if (then === lib$es6$promise$$internal$$GET_THEN_ERROR) {
+          lib$es6$promise$$internal$$reject(promise, lib$es6$promise$$internal$$GET_THEN_ERROR.error);
         } else if (then === undefined) {
-          $$$internal$$fulfill(promise, maybeThenable);
-        } else if ($$utils$$isFunction(then)) {
-          $$$internal$$handleForeignThenable(promise, maybeThenable, then);
+          lib$es6$promise$$internal$$fulfill(promise, maybeThenable);
+        } else if (lib$es6$promise$utils$$isFunction(then)) {
+          lib$es6$promise$$internal$$handleForeignThenable(promise, maybeThenable, then);
         } else {
-          $$$internal$$fulfill(promise, maybeThenable);
+          lib$es6$promise$$internal$$fulfill(promise, maybeThenable);
         }
       }
     }
 
-    function $$$internal$$resolve(promise, value) {
+    function lib$es6$promise$$internal$$resolve(promise, value) {
       if (promise === value) {
-        $$$internal$$reject(promise, $$$internal$$selfFullfillment());
-      } else if ($$utils$$objectOrFunction(value)) {
-        $$$internal$$handleMaybeThenable(promise, value);
+        lib$es6$promise$$internal$$reject(promise, lib$es6$promise$$internal$$selfFullfillment());
+      } else if (lib$es6$promise$utils$$objectOrFunction(value)) {
+        lib$es6$promise$$internal$$handleMaybeThenable(promise, value);
       } else {
-        $$$internal$$fulfill(promise, value);
+        lib$es6$promise$$internal$$fulfill(promise, value);
       }
     }
 
-    function $$$internal$$publishRejection(promise) {
+    function lib$es6$promise$$internal$$publishRejection(promise) {
       if (promise._onerror) {
         promise._onerror(promise._result);
       }
 
-      $$$internal$$publish(promise);
+      lib$es6$promise$$internal$$publish(promise);
     }
 
-    function $$$internal$$fulfill(promise, value) {
-      if (promise._state !== $$$internal$$PENDING) { return; }
+    function lib$es6$promise$$internal$$fulfill(promise, value) {
+      if (promise._state !== lib$es6$promise$$internal$$PENDING) { return; }
 
       promise._result = value;
-      promise._state = $$$internal$$FULFILLED;
+      promise._state = lib$es6$promise$$internal$$FULFILLED;
 
-      if (promise._subscribers.length === 0) {
-      } else {
-        $$asap$$default($$$internal$$publish, promise);
+      if (promise._subscribers.length !== 0) {
+        lib$es6$promise$asap$$default(lib$es6$promise$$internal$$publish, promise);
       }
     }
 
-    function $$$internal$$reject(promise, reason) {
-      if (promise._state !== $$$internal$$PENDING) { return; }
-      promise._state = $$$internal$$REJECTED;
+    function lib$es6$promise$$internal$$reject(promise, reason) {
+      if (promise._state !== lib$es6$promise$$internal$$PENDING) { return; }
+      promise._state = lib$es6$promise$$internal$$REJECTED;
       promise._result = reason;
 
-      $$asap$$default($$$internal$$publishRejection, promise);
+      lib$es6$promise$asap$$default(lib$es6$promise$$internal$$publishRejection, promise);
     }
 
-    function $$$internal$$subscribe(parent, child, onFulfillment, onRejection) {
+    function lib$es6$promise$$internal$$subscribe(parent, child, onFulfillment, onRejection) {
       var subscribers = parent._subscribers;
       var length = subscribers.length;
 
       parent._onerror = null;
 
       subscribers[length] = child;
-      subscribers[length + $$$internal$$FULFILLED] = onFulfillment;
-      subscribers[length + $$$internal$$REJECTED]  = onRejection;
+      subscribers[length + lib$es6$promise$$internal$$FULFILLED] = onFulfillment;
+      subscribers[length + lib$es6$promise$$internal$$REJECTED]  = onRejection;
 
       if (length === 0 && parent._state) {
-        $$asap$$default($$$internal$$publish, parent);
+        lib$es6$promise$asap$$default(lib$es6$promise$$internal$$publish, parent);
       }
     }
 
-    function $$$internal$$publish(promise) {
+    function lib$es6$promise$$internal$$publish(promise) {
       var subscribers = promise._subscribers;
       var settled = promise._state;
 
@@ -382,7 +398,7 @@ module.exports = InMemoryStrategy;
         callback = subscribers[i + settled];
 
         if (child) {
-          $$$internal$$invokeCallback(settled, child, callback, detail);
+          lib$es6$promise$$internal$$invokeCallback(settled, child, callback, detail);
         } else {
           callback(detail);
         }
@@ -391,29 +407,29 @@ module.exports = InMemoryStrategy;
       promise._subscribers.length = 0;
     }
 
-    function $$$internal$$ErrorObject() {
+    function lib$es6$promise$$internal$$ErrorObject() {
       this.error = null;
     }
 
-    var $$$internal$$TRY_CATCH_ERROR = new $$$internal$$ErrorObject();
+    var lib$es6$promise$$internal$$TRY_CATCH_ERROR = new lib$es6$promise$$internal$$ErrorObject();
 
-    function $$$internal$$tryCatch(callback, detail) {
+    function lib$es6$promise$$internal$$tryCatch(callback, detail) {
       try {
         return callback(detail);
       } catch(e) {
-        $$$internal$$TRY_CATCH_ERROR.error = e;
-        return $$$internal$$TRY_CATCH_ERROR;
+        lib$es6$promise$$internal$$TRY_CATCH_ERROR.error = e;
+        return lib$es6$promise$$internal$$TRY_CATCH_ERROR;
       }
     }
 
-    function $$$internal$$invokeCallback(settled, promise, callback, detail) {
-      var hasCallback = $$utils$$isFunction(callback),
+    function lib$es6$promise$$internal$$invokeCallback(settled, promise, callback, detail) {
+      var hasCallback = lib$es6$promise$utils$$isFunction(callback),
           value, error, succeeded, failed;
 
       if (hasCallback) {
-        value = $$$internal$$tryCatch(callback, detail);
+        value = lib$es6$promise$$internal$$tryCatch(callback, detail);
 
-        if (value === $$$internal$$TRY_CATCH_ERROR) {
+        if (value === lib$es6$promise$$internal$$TRY_CATCH_ERROR) {
           failed = true;
           error = value.error;
           value = null;
@@ -422,7 +438,7 @@ module.exports = InMemoryStrategy;
         }
 
         if (promise === value) {
-          $$$internal$$reject(promise, $$$internal$$cannotReturnOwn());
+          lib$es6$promise$$internal$$reject(promise, lib$es6$promise$$internal$$cannotReturnOwn());
           return;
         }
 
@@ -431,175 +447,162 @@ module.exports = InMemoryStrategy;
         succeeded = true;
       }
 
-      if (promise._state !== $$$internal$$PENDING) {
+      if (promise._state !== lib$es6$promise$$internal$$PENDING) {
         // noop
       } else if (hasCallback && succeeded) {
-        $$$internal$$resolve(promise, value);
+        lib$es6$promise$$internal$$resolve(promise, value);
       } else if (failed) {
-        $$$internal$$reject(promise, error);
-      } else if (settled === $$$internal$$FULFILLED) {
-        $$$internal$$fulfill(promise, value);
-      } else if (settled === $$$internal$$REJECTED) {
-        $$$internal$$reject(promise, value);
+        lib$es6$promise$$internal$$reject(promise, error);
+      } else if (settled === lib$es6$promise$$internal$$FULFILLED) {
+        lib$es6$promise$$internal$$fulfill(promise, value);
+      } else if (settled === lib$es6$promise$$internal$$REJECTED) {
+        lib$es6$promise$$internal$$reject(promise, value);
       }
     }
 
-    function $$$internal$$initializePromise(promise, resolver) {
+    function lib$es6$promise$$internal$$initializePromise(promise, resolver) {
       try {
         resolver(function resolvePromise(value){
-          $$$internal$$resolve(promise, value);
+          lib$es6$promise$$internal$$resolve(promise, value);
         }, function rejectPromise(reason) {
-          $$$internal$$reject(promise, reason);
+          lib$es6$promise$$internal$$reject(promise, reason);
         });
       } catch(e) {
-        $$$internal$$reject(promise, e);
+        lib$es6$promise$$internal$$reject(promise, e);
       }
     }
 
-    function $$$enumerator$$makeSettledResult(state, position, value) {
-      if (state === $$$internal$$FULFILLED) {
-        return {
-          state: 'fulfilled',
-          value: value
-        };
-      } else {
-        return {
-          state: 'rejected',
-          reason: value
-        };
-      }
-    }
+    function lib$es6$promise$enumerator$$Enumerator(Constructor, input) {
+      var enumerator = this;
 
-    function $$$enumerator$$Enumerator(Constructor, input, abortOnReject, label) {
-      this._instanceConstructor = Constructor;
-      this.promise = new Constructor($$$internal$$noop, label);
-      this._abortOnReject = abortOnReject;
+      enumerator._instanceConstructor = Constructor;
+      enumerator.promise = new Constructor(lib$es6$promise$$internal$$noop);
 
-      if (this._validateInput(input)) {
-        this._input     = input;
-        this.length     = input.length;
-        this._remaining = input.length;
+      if (enumerator._validateInput(input)) {
+        enumerator._input     = input;
+        enumerator.length     = input.length;
+        enumerator._remaining = input.length;
 
-        this._init();
+        enumerator._init();
 
-        if (this.length === 0) {
-          $$$internal$$fulfill(this.promise, this._result);
+        if (enumerator.length === 0) {
+          lib$es6$promise$$internal$$fulfill(enumerator.promise, enumerator._result);
         } else {
-          this.length = this.length || 0;
-          this._enumerate();
-          if (this._remaining === 0) {
-            $$$internal$$fulfill(this.promise, this._result);
+          enumerator.length = enumerator.length || 0;
+          enumerator._enumerate();
+          if (enumerator._remaining === 0) {
+            lib$es6$promise$$internal$$fulfill(enumerator.promise, enumerator._result);
           }
         }
       } else {
-        $$$internal$$reject(this.promise, this._validationError());
+        lib$es6$promise$$internal$$reject(enumerator.promise, enumerator._validationError());
       }
     }
 
-    $$$enumerator$$Enumerator.prototype._validateInput = function(input) {
-      return $$utils$$isArray(input);
+    lib$es6$promise$enumerator$$Enumerator.prototype._validateInput = function(input) {
+      return lib$es6$promise$utils$$isArray(input);
     };
 
-    $$$enumerator$$Enumerator.prototype._validationError = function() {
+    lib$es6$promise$enumerator$$Enumerator.prototype._validationError = function() {
       return new Error('Array Methods must be provided an Array');
     };
 
-    $$$enumerator$$Enumerator.prototype._init = function() {
+    lib$es6$promise$enumerator$$Enumerator.prototype._init = function() {
       this._result = new Array(this.length);
     };
 
-    var $$$enumerator$$default = $$$enumerator$$Enumerator;
+    var lib$es6$promise$enumerator$$default = lib$es6$promise$enumerator$$Enumerator;
 
-    $$$enumerator$$Enumerator.prototype._enumerate = function() {
-      var length  = this.length;
-      var promise = this.promise;
-      var input   = this._input;
-
-      for (var i = 0; promise._state === $$$internal$$PENDING && i < length; i++) {
-        this._eachEntry(input[i], i);
-      }
-    };
-
-    $$$enumerator$$Enumerator.prototype._eachEntry = function(entry, i) {
-      var c = this._instanceConstructor;
-      if ($$utils$$isMaybeThenable(entry)) {
-        if (entry.constructor === c && entry._state !== $$$internal$$PENDING) {
-          entry._onerror = null;
-          this._settledAt(entry._state, i, entry._result);
-        } else {
-          this._willSettleAt(c.resolve(entry), i);
-        }
-      } else {
-        this._remaining--;
-        this._result[i] = this._makeResult($$$internal$$FULFILLED, i, entry);
-      }
-    };
-
-    $$$enumerator$$Enumerator.prototype._settledAt = function(state, i, value) {
-      var promise = this.promise;
-
-      if (promise._state === $$$internal$$PENDING) {
-        this._remaining--;
-
-        if (this._abortOnReject && state === $$$internal$$REJECTED) {
-          $$$internal$$reject(promise, value);
-        } else {
-          this._result[i] = this._makeResult(state, i, value);
-        }
-      }
-
-      if (this._remaining === 0) {
-        $$$internal$$fulfill(promise, this._result);
-      }
-    };
-
-    $$$enumerator$$Enumerator.prototype._makeResult = function(state, i, value) {
-      return value;
-    };
-
-    $$$enumerator$$Enumerator.prototype._willSettleAt = function(promise, i) {
+    lib$es6$promise$enumerator$$Enumerator.prototype._enumerate = function() {
       var enumerator = this;
 
-      $$$internal$$subscribe(promise, undefined, function(value) {
-        enumerator._settledAt($$$internal$$FULFILLED, i, value);
+      var length  = enumerator.length;
+      var promise = enumerator.promise;
+      var input   = enumerator._input;
+
+      for (var i = 0; promise._state === lib$es6$promise$$internal$$PENDING && i < length; i++) {
+        enumerator._eachEntry(input[i], i);
+      }
+    };
+
+    lib$es6$promise$enumerator$$Enumerator.prototype._eachEntry = function(entry, i) {
+      var enumerator = this;
+      var c = enumerator._instanceConstructor;
+
+      if (lib$es6$promise$utils$$isMaybeThenable(entry)) {
+        if (entry.constructor === c && entry._state !== lib$es6$promise$$internal$$PENDING) {
+          entry._onerror = null;
+          enumerator._settledAt(entry._state, i, entry._result);
+        } else {
+          enumerator._willSettleAt(c.resolve(entry), i);
+        }
+      } else {
+        enumerator._remaining--;
+        enumerator._result[i] = entry;
+      }
+    };
+
+    lib$es6$promise$enumerator$$Enumerator.prototype._settledAt = function(state, i, value) {
+      var enumerator = this;
+      var promise = enumerator.promise;
+
+      if (promise._state === lib$es6$promise$$internal$$PENDING) {
+        enumerator._remaining--;
+
+        if (state === lib$es6$promise$$internal$$REJECTED) {
+          lib$es6$promise$$internal$$reject(promise, value);
+        } else {
+          enumerator._result[i] = value;
+        }
+      }
+
+      if (enumerator._remaining === 0) {
+        lib$es6$promise$$internal$$fulfill(promise, enumerator._result);
+      }
+    };
+
+    lib$es6$promise$enumerator$$Enumerator.prototype._willSettleAt = function(promise, i) {
+      var enumerator = this;
+
+      lib$es6$promise$$internal$$subscribe(promise, undefined, function(value) {
+        enumerator._settledAt(lib$es6$promise$$internal$$FULFILLED, i, value);
       }, function(reason) {
-        enumerator._settledAt($$$internal$$REJECTED, i, reason);
+        enumerator._settledAt(lib$es6$promise$$internal$$REJECTED, i, reason);
       });
     };
-
-    var $$promise$all$$default = function all(entries, label) {
-      return new $$$enumerator$$default(this, entries, true /* abort on reject */, label).promise;
-    };
-
-    var $$promise$race$$default = function race(entries, label) {
+    function lib$es6$promise$promise$all$$all(entries) {
+      return new lib$es6$promise$enumerator$$default(this, entries).promise;
+    }
+    var lib$es6$promise$promise$all$$default = lib$es6$promise$promise$all$$all;
+    function lib$es6$promise$promise$race$$race(entries) {
       /*jshint validthis:true */
       var Constructor = this;
 
-      var promise = new Constructor($$$internal$$noop, label);
+      var promise = new Constructor(lib$es6$promise$$internal$$noop);
 
-      if (!$$utils$$isArray(entries)) {
-        $$$internal$$reject(promise, new TypeError('You must pass an array to race.'));
+      if (!lib$es6$promise$utils$$isArray(entries)) {
+        lib$es6$promise$$internal$$reject(promise, new TypeError('You must pass an array to race.'));
         return promise;
       }
 
       var length = entries.length;
 
       function onFulfillment(value) {
-        $$$internal$$resolve(promise, value);
+        lib$es6$promise$$internal$$resolve(promise, value);
       }
 
       function onRejection(reason) {
-        $$$internal$$reject(promise, reason);
+        lib$es6$promise$$internal$$reject(promise, reason);
       }
 
-      for (var i = 0; promise._state === $$$internal$$PENDING && i < length; i++) {
-        $$$internal$$subscribe(Constructor.resolve(entries[i]), undefined, onFulfillment, onRejection);
+      for (var i = 0; promise._state === lib$es6$promise$$internal$$PENDING && i < length; i++) {
+        lib$es6$promise$$internal$$subscribe(Constructor.resolve(entries[i]), undefined, onFulfillment, onRejection);
       }
 
       return promise;
-    };
-
-    var $$promise$resolve$$default = function resolve(object, label) {
+    }
+    var lib$es6$promise$promise$race$$default = lib$es6$promise$promise$race$$race;
+    function lib$es6$promise$promise$resolve$$resolve(object) {
       /*jshint validthis:true */
       var Constructor = this;
 
@@ -607,31 +610,31 @@ module.exports = InMemoryStrategy;
         return object;
       }
 
-      var promise = new Constructor($$$internal$$noop, label);
-      $$$internal$$resolve(promise, object);
+      var promise = new Constructor(lib$es6$promise$$internal$$noop);
+      lib$es6$promise$$internal$$resolve(promise, object);
       return promise;
-    };
-
-    var $$promise$reject$$default = function reject(reason, label) {
+    }
+    var lib$es6$promise$promise$resolve$$default = lib$es6$promise$promise$resolve$$resolve;
+    function lib$es6$promise$promise$reject$$reject(reason) {
       /*jshint validthis:true */
       var Constructor = this;
-      var promise = new Constructor($$$internal$$noop, label);
-      $$$internal$$reject(promise, reason);
+      var promise = new Constructor(lib$es6$promise$$internal$$noop);
+      lib$es6$promise$$internal$$reject(promise, reason);
       return promise;
-    };
+    }
+    var lib$es6$promise$promise$reject$$default = lib$es6$promise$promise$reject$$reject;
 
-    var $$es6$promise$promise$$counter = 0;
+    var lib$es6$promise$promise$$counter = 0;
 
-    function $$es6$promise$promise$$needsResolver() {
+    function lib$es6$promise$promise$$needsResolver() {
       throw new TypeError('You must pass a resolver function as the first argument to the promise constructor');
     }
 
-    function $$es6$promise$promise$$needsNew() {
+    function lib$es6$promise$promise$$needsNew() {
       throw new TypeError("Failed to construct 'Promise': Please use the 'new' operator, this object constructor cannot be called as a function.");
     }
 
-    var $$es6$promise$promise$$default = $$es6$promise$promise$$Promise;
-
+    var lib$es6$promise$promise$$default = lib$es6$promise$promise$$Promise;
     /**
       Promise objects represent the eventual result of an asynchronous operation. The
       primary way of interacting with a promise is through its `then` method, which
@@ -735,32 +738,32 @@ module.exports = InMemoryStrategy;
       Useful for tooling.
       @constructor
     */
-    function $$es6$promise$promise$$Promise(resolver) {
-      this._id = $$es6$promise$promise$$counter++;
+    function lib$es6$promise$promise$$Promise(resolver) {
+      this._id = lib$es6$promise$promise$$counter++;
       this._state = undefined;
       this._result = undefined;
       this._subscribers = [];
 
-      if ($$$internal$$noop !== resolver) {
-        if (!$$utils$$isFunction(resolver)) {
-          $$es6$promise$promise$$needsResolver();
+      if (lib$es6$promise$$internal$$noop !== resolver) {
+        if (!lib$es6$promise$utils$$isFunction(resolver)) {
+          lib$es6$promise$promise$$needsResolver();
         }
 
-        if (!(this instanceof $$es6$promise$promise$$Promise)) {
-          $$es6$promise$promise$$needsNew();
+        if (!(this instanceof lib$es6$promise$promise$$Promise)) {
+          lib$es6$promise$promise$$needsNew();
         }
 
-        $$$internal$$initializePromise(this, resolver);
+        lib$es6$promise$$internal$$initializePromise(this, resolver);
       }
     }
 
-    $$es6$promise$promise$$Promise.all = $$promise$all$$default;
-    $$es6$promise$promise$$Promise.race = $$promise$race$$default;
-    $$es6$promise$promise$$Promise.resolve = $$promise$resolve$$default;
-    $$es6$promise$promise$$Promise.reject = $$promise$reject$$default;
+    lib$es6$promise$promise$$Promise.all = lib$es6$promise$promise$all$$default;
+    lib$es6$promise$promise$$Promise.race = lib$es6$promise$promise$race$$default;
+    lib$es6$promise$promise$$Promise.resolve = lib$es6$promise$promise$resolve$$default;
+    lib$es6$promise$promise$$Promise.reject = lib$es6$promise$promise$reject$$default;
 
-    $$es6$promise$promise$$Promise.prototype = {
-      constructor: $$es6$promise$promise$$Promise,
+    lib$es6$promise$promise$$Promise.prototype = {
+      constructor: lib$es6$promise$promise$$Promise,
 
     /**
       The primary way of interacting with a promise is through its `then` method,
@@ -959,20 +962,20 @@ module.exports = InMemoryStrategy;
         var parent = this;
         var state = parent._state;
 
-        if (state === $$$internal$$FULFILLED && !onFulfillment || state === $$$internal$$REJECTED && !onRejection) {
+        if (state === lib$es6$promise$$internal$$FULFILLED && !onFulfillment || state === lib$es6$promise$$internal$$REJECTED && !onRejection) {
           return this;
         }
 
-        var child = new this.constructor($$$internal$$noop);
+        var child = new this.constructor(lib$es6$promise$$internal$$noop);
         var result = parent._result;
 
         if (state) {
           var callback = arguments[state - 1];
-          $$asap$$default(function(){
-            $$$internal$$invokeCallback(state, child, callback, result);
+          lib$es6$promise$asap$$default(function(){
+            lib$es6$promise$$internal$$invokeCallback(state, child, callback, result);
           });
         } else {
-          $$$internal$$subscribe(parent, child, onFulfillment, onRejection);
+          lib$es6$promise$$internal$$subscribe(parent, child, onFulfillment, onRejection);
         }
 
         return child;
@@ -1009,53 +1012,49 @@ module.exports = InMemoryStrategy;
         return this.then(null, onRejection);
       }
     };
-
-    var $$es6$promise$polyfill$$default = function polyfill() {
+    function lib$es6$promise$polyfill$$polyfill() {
       var local;
 
       if (typeof global !== 'undefined') {
-        local = global;
-      } else if (typeof window !== 'undefined' && window.document) {
-        local = window;
+          local = global;
+      } else if (typeof self !== 'undefined') {
+          local = self;
       } else {
-        local = self;
+          try {
+              local = Function('return this')();
+          } catch (e) {
+              throw new Error('polyfill failed because global object is unavailable in this environment');
+          }
       }
 
-      var es6PromiseSupport =
-        "Promise" in local &&
-        // Some of these methods are missing from
-        // Firefox/Chrome experimental implementations
-        "resolve" in local.Promise &&
-        "reject" in local.Promise &&
-        "all" in local.Promise &&
-        "race" in local.Promise &&
-        // Older version of the spec had a resolver object
-        // as the arg rather than a function
-        (function() {
-          var resolve;
-          new local.Promise(function(r) { resolve = r; });
-          return $$utils$$isFunction(resolve);
-        }());
+      var P = local.Promise;
 
-      if (!es6PromiseSupport) {
-        local.Promise = $$es6$promise$promise$$default;
+      if (P && Object.prototype.toString.call(P.resolve()) === '[object Promise]' && !P.cast) {
+        return;
       }
-    };
 
-    var es6$promise$umd$$ES6Promise = {
-      'Promise': $$es6$promise$promise$$default,
-      'polyfill': $$es6$promise$polyfill$$default
+      local.Promise = lib$es6$promise$promise$$default;
+    }
+    var lib$es6$promise$polyfill$$default = lib$es6$promise$polyfill$$polyfill;
+
+    var lib$es6$promise$umd$$ES6Promise = {
+      'Promise': lib$es6$promise$promise$$default,
+      'polyfill': lib$es6$promise$polyfill$$default
     };
 
     /* global define:true module:true window: true */
     if (typeof define === 'function' && define['amd']) {
-      define(function() { return es6$promise$umd$$ES6Promise; });
+      define(function() { return lib$es6$promise$umd$$ES6Promise; });
     } else if (typeof module !== 'undefined' && module['exports']) {
-      module['exports'] = es6$promise$umd$$ES6Promise;
+      module['exports'] = lib$es6$promise$umd$$ES6Promise;
     } else if (typeof this !== 'undefined') {
-      this['ES6Promise'] = es6$promise$umd$$ES6Promise;
+      this['ES6Promise'] = lib$es6$promise$umd$$ES6Promise;
     }
+
+    lib$es6$promise$polyfill$$default();
 }).call(this);
+
+
 }).call(this,require("1YiZ5S"),typeof self !== "undefined" ? self : typeof window !== "undefined" ? window : {})
 },{"1YiZ5S":3}],3:[function(require,module,exports){
 // shim for using process in browser
@@ -1123,4 +1122,4 @@ process.chdir = function (dir) {
 };
 
 },{}]},{},[1])
-//# sourceMappingURL=data:application/json;base64,eyJ2ZXJzaW9uIjozLCJzb3VyY2VzIjpbIlBlcnNpc3RlbmNlU3RyYXRlZ3kvSW5NZW1vcnlTdHJhdGVneS50cyJdLCJuYW1lcyI6WyJJbk1lbW9yeVN0cmF0ZWd5IiwiSW5NZW1vcnlTdHJhdGVneS5jb25zdHJ1Y3RvciIsIkluTWVtb3J5U3RyYXRlZ3kuY3JlYXRlIiwiSW5NZW1vcnlTdHJhdGVneS51cGRhdGUiLCJJbk1lbW9yeVN0cmF0ZWd5LmRlbGV0ZSIsIkluTWVtb3J5U3RyYXRlZ3kuZmluZCIsIkluTWVtb3J5U3RyYXRlZ3kuZmluZC5hbGxGaWx0ZXIiLCJJbk1lbW9yeVN0cmF0ZWd5LmZpbmQuc3RyaWN0RmlsdGVyIiwiSW5NZW1vcnlTdHJhdGVneS5maW5kQnlLZXkiLCJJbk1lbW9yeVN0cmF0ZWd5Lm1hdGNoZXNLZXkiLCJJbk1lbW9yeVN0cmF0ZWd5LmdldENvbGxlY3Rpb24iXSwibWFwcGluZ3MiOiJBQUFBLGtFQUFrRTtBQUNsRSxvREFBb0Q7QUFLcEQsSUFBTyxJQUFJLFdBQVcsYUFBYSxDQUFDLENBQUM7QUFDckMsSUFBTyxPQUFPLEdBQUcsSUFBSSxDQUFDLE9BQU8sQ0FBQztBQUU5QixJQUFNLGdCQUFnQjtJQUdsQkEsU0FIRUEsZ0JBQWdCQTtRQUNWQyxZQUFPQSxHQUE4QkEsRUFBRUEsQ0FBQ0E7SUFFekJBLENBQUNBO0lBRWpCRCxpQ0FBTUEsR0FBYkEsVUFBZUEsSUFBZUEsRUFBRUEsR0FBR0E7UUFBbkNFLGlCQU1DQTtRQUxHQSxNQUFNQSxDQUFDQSxJQUFJQSxPQUFPQSxDQUFPQSxVQUFDQSxPQUFPQSxFQUFFQSxNQUFNQTtZQUNyQ0EsS0FBSUEsQ0FBQ0EsT0FBT0EsQ0FBQ0EsSUFBSUEsQ0FBQ0EsTUFBTUEsQ0FBQ0EsSUFBSUEsQ0FBQ0EsR0FBR0EsS0FBSUEsQ0FBQ0EsT0FBT0EsQ0FBQ0EsSUFBSUEsQ0FBQ0EsTUFBTUEsQ0FBQ0EsSUFBSUEsQ0FBQ0EsSUFBSUEsRUFBRUEsQ0FBQ0E7WUFDdEVBLEtBQUlBLENBQUNBLE9BQU9BLENBQUNBLElBQUlBLENBQUNB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QUFDQSxDQUFDQSxHQUFDQSxDQUFDQSxFQUFFQSxDQUFDQSxHQUFDQSxJQUFJQSxDQUFDQSxNQUFNQSxDQUFDQSxHQUFHQSxDQUFDQSxNQUFNQSxFQUFFQSxDQUFDQSxFQUFFQSxFQUFFQSxDQUFDQTtZQUN6Q0EsSUFBSUEsSUFBSUEsR0FBR0EsSUFBSUEsQ0FBQ0EsTUFBTUEsQ0FBQ0EsR0FBR0EsQ0FBQ0EsQ0FBQ0EsQ0FBQ0EsQ0FBQ0E7WUFDOUJBLEVBQUVBLENBQUFBLENBQUNBLEdBQUdBLENBQUNBLElBQUlBLENBQUNBLElBQUlBLE9BQU9BLENBQUNBLElBQUlBLENBQUNBLENBQUNBLENBQUNBLENBQUNBO2dCQUM1QkEsTUFBTUEsQ0FBQ0EsS0FBS0EsQ0FBQ0E7WUFDakJBLENBQUNBO1FBQ0xBLENBQUNBO1FBQ0RBLE1BQU1BLENBQUNBLElBQUlBLENBQUNBO0lBQ2hCQSxDQUFDQTtJQUVPVCx3Q0FBYUEsR0FBckJBLFVBQXVCQSxJQUFnQkE7UUFDbkNVLEVBQUVBLENBQUFBLENBQUNBLENBQUNBLElBQUlBLENBQUNBLE9BQU9BLENBQUNBLElBQUlBLENBQUNBLE1BQU1BLENBQUNBLElBQUlBLENBQUNBLENBQUNBLENBQUNBLENBQUNBO1lBQ2pDQSxJQUFJQSxDQUFDQSxPQUFPQSxDQUFDQSxJQUFJQSxDQUFDQSxNQUFNQSxDQUFDQSxJQUFJQSxDQUFDQSxHQUFHQSxFQUFFQSxDQUFDQTtRQUN4Q0EsQ0FBQ0E7UUFDREEsTUFBTUEsQ0FBQ0EsSUFBSUEsQ0FBQ0EsT0FBT0EsQ0FBQ0EsSUFBSUEsQ0FBQ0EsTUFBTUEsQ0FBQ0EsSUFBSUEsQ0FBQ0EsQ0FBQ0E7SUFDMUNBLENBQUNBO0lBQ0xWLHVCQUFDQTtBQUFEQSxDQXpGQSxBQXlGQ0EsSUFBQTtBQUNELEFBQTBCLGlCQUFqQixnQkFBZ0IsQ0FBQyIsImZpbGUiOiJQZXJzaXN0ZW5jZVN0cmF0ZWd5L0luTWVtb3J5U3RyYXRlZ3kuanMiLCJzb3VyY2VSb290IjoiL2hvbWUva2Fwa2UvcHJvamVjdHMvdGFsYXJpYS8iLCJzb3VyY2VzQ29udGVudCI6W119
+//# sourceMappingURL=data:application/json;base64,eyJ2ZXJzaW9uIjozLCJzb3VyY2VzIjpbIlBlcnNpc3RlbmNlU3RyYXRlZ3kvSW5NZW1vcnlTdHJhdGVneS50cyJdLCJuYW1lcyI6WyJJbk1lbW9yeVN0cmF0ZWd5IiwiSW5NZW1vcnlTdHJhdGVneS5jb25zdHJ1Y3RvciIsIkluTWVtb3J5U3RyYXRlZ3kuY3JlYXRlIiwiSW5NZW1vcnlTdHJhdGVneS51cGRhdGUiLCJJbk1lbW9yeVN0cmF0ZWd5LmRlbGV0ZSIsIkluTWVtb3J5U3RyYXRlZ3kuZmluZCIsIkluTWVtb3J5U3RyYXRlZ3kuZmluZC5hbGxGaWx0ZXIiLCJJbk1lbW9yeVN0cmF0ZWd5LmZpbmQuc3RyaWN0RmlsdGVyIiwiSW5NZW1vcnlTdHJhdGVneS5maW5kQnlLZXkiLCJJbk1lbW9yeVN0cmF0ZWd5Lm1hdGNoZXNLZXkiLCJJbk1lbW9yeVN0cmF0ZWd5LmdldENvbGxlY3Rpb24iXSwibWFwcGluZ3MiOiJBQUFBLGtFQUFrRTtBQUNsRSxvREFBb0Q7QUFJcEQsNEJBQXNCLGFBQWEsQ0FBQyxDQUFBO0FBRXBDO0lBR0lBO1FBRlFDLFlBQU9BLEdBQThCQSxFQUFFQSxDQUFDQTtJQUV6QkEsQ0FBQ0E7SUFFakJELGlDQUFNQSxHQUFiQSxVQUFlQSxJQUFlQSxFQUFFQSxHQUFHQTtRQUFuQ0UsaUJBTUNBO1FBTEdBLE1BQU1BLENBQUNBLElBQUlBLHFCQUFPQSxDQUFPQSxVQUFDQSxPQUFPQSxFQUFFQSxNQUFNQTtZQUNyQ0EsS0FBSUEsQ0FBQ0EsT0FBT0EsQ0FBQ0EsSUFBSUEsQ0FBQ0EsTUFBTUEsQ0FBQ0EsSUFBSUEsQ0FBQ0EsR0FBR0EsS0FBSUEsQ0FBQ0EsT0FBT0EsQ0FBQ0EsSUFBSUEsQ0FBQ0EsTUFBTUEsQ0FBQ0EsSUFBSUEsQ0FBQ0EsSUFBSUEsRUFBRUEsQ0FBQ0E7WUFDdEVBLEtBQUlBLENBQUNBLE9BQU9BLENBQUNBLElBQUlBLENBQUNBLE1BQU1BLENBQUNBLElBQUlBLENBQUNBLENBQUNBLElBQUlBLENBQUNBLEdBQUdBLENBQUNBLENBQUNBO1lBQ3pDQSxPQUFPQSxF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Q0EsR0FBR0EsQ0FBQ0EsQ0FBQ0EsR0FBQ0EsQ0FBQ0EsRUFBRUEsQ0FBQ0EsR0FBQ0EsSUFBSUEsQ0FBQ0EsTUFBTUEsQ0FBQ0EsR0FBR0EsQ0FBQ0EsTUFBTUEsRUFBRUEsQ0FBQ0EsRUFBRUEsRUFBRUEsQ0FBQ0E7WUFDekNBLElBQUlBLElBQUlBLEdBQUdBLElBQUlBLENBQUNBLE1BQU1BLENBQUNBLEdBQUdBLENBQUNBLENBQUNBLENBQUNBLENBQUNBO1lBQzlCQSxFQUFFQSxDQUFBQSxDQUFDQSxHQUFHQSxDQUFDQSxJQUFJQSxDQUFDQSxJQUFJQSxPQUFPQSxDQUFDQSxJQUFJQSxDQUFDQSxDQUFDQSxDQUFDQSxDQUFDQTtnQkFDNUJBLE1BQU1BLENBQUNBLEtBQUtBLENBQUNBO1lBQ2pCQSxDQUFDQTtRQUNMQSxDQUFDQTtRQUNEQSxNQUFNQSxDQUFDQSxJQUFJQSxDQUFDQTtJQUNoQkEsQ0FBQ0E7SUFFT1Qsd0NBQWFBLEdBQXJCQSxVQUF1QkEsSUFBZ0JBO1FBQ25DVSxFQUFFQSxDQUFBQSxDQUFDQSxDQUFDQSxJQUFJQSxDQUFDQSxPQUFPQSxDQUFDQSxJQUFJQSxDQUFDQSxNQUFNQSxDQUFDQSxJQUFJQSxDQUFDQSxDQUFDQSxDQUFDQSxDQUFDQTtZQUNqQ0EsSUFBSUEsQ0FBQ0EsT0FBT0EsQ0FBQ0EsSUFBSUEsQ0FBQ0EsTUFBTUEsQ0FBQ0EsSUFBSUEsQ0FBQ0EsR0FBR0EsRUFBRUEsQ0FBQ0E7UUFDeENBLENBQUNBO1FBQ0RBLE1BQU1BLENBQUNBLElBQUlBLENBQUNBLE9BQU9BLENBQUNBLElBQUlBLENBQUNBLE1BQU1BLENBQUNBLElBQUlBLENBQUNBLENBQUNBO0lBQzFDQSxDQUFDQTtJQUNMVix1QkFBQ0E7QUFBREEsQ0E1RkEsQUE0RkNBLElBQUE7QUE1RkQsa0NBNEZDLENBQUEiLCJmaWxlIjoiUGVyc2lzdGVuY2VTdHJhdGVneS9Jbk1lbW9yeVN0cmF0ZWd5LmpzIiwic291cmNlc0NvbnRlbnQiOlsiLy8vPHJlZmVyZW5jZSBwYXRoPVwiLi4vLi4vdHlwaW5ncy9lczYtcHJvbWlzZS9lczYtcHJvbWlzZS5kLnRzXCIgLz5cbi8vLzxyZWZlcmVuY2UgcGF0aD1cIi4uLy4uL3R5cGluZ3Mvbm9kZS9ub2RlLmQudHNcIiAvPlxuXG5pbXBvcnQge1BlcnNpc3RlbmNlU3RyYXRlZ3l9IGZyb20gJy4uL1BlcnNpc3RlbmNlU3RyYXRlZ3knO1xuaW1wb3J0IEVudGl0eUluZm8gZnJvbSAnLi4vRW50aXR5SW5mbyc7XG5pbXBvcnQge1Byb21pc2V9IGZyb20gJ2VzNi1wcm9taXNlJztcblxuZXhwb3J0IGRlZmF1bHQgY2xhc3MgSW5NZW1vcnlTdHJhdGVneSBpbXBsZW1lbnRzIFBlcnNpc3RlbmNlU3RyYXRlZ3kge1xuICAgIHByaXZhdGUgb2JqZWN0czp7W25hbWU6c3RyaW5nXTpBcnJheTxhbnk+fSA9IHt9O1xuXG4gICAgcHVibGljIGNvbnN0cnVjdG9yICgpIHt9XG5cbiAgICBwdWJsaWMgY3JlYXRlIChpbmZvOkVudGl0eUluZm8sIG9iaik6UHJvbWlzZTx2b2lkPiB7XG4gICAgICAgIHJldHVybiBuZXcgUHJvbWlzZTx2b2lkPigocmVzb2x2ZSwgcmVqZWN0KSA9PiB7XG4gICAgICAgICAgICB0aGlzLm9iamVjdHNbaW5mby5jb25maWcubmFtZV0gPSB0aGlzLm9iamVjdHNbaW5mby5jb25maWcubmFtZV0gfHwgW107XG4gICAgICAgICAgICB0aGlzLm9iamVjdHNbaW5mby5jb25maWcubmFtZV0ucHVzaChvYmopO1xuICAgICAgICAgICAgcmVzb2x2ZSgpO1xuICAgICAgICB9KTtcbiAgICB9XG5cbiAgICBwdWJsaWMgdXBkYXRlIChpbmZvOkVudGl0eUluZm8sIG9iaik6UHJvbWlzZTx2b2lkPiB7XG4gICAgICAgIHJldHVybiBuZXcgUHJvbWlzZTx2b2lkPigocmVzb2x2ZSkgPT4ge1xuICAgICAgICAgICAgdGhpcy5maW5kQnlLZXkoaW5mbywgb2JqKS50aGVuKChmb3VuZCkgPT4ge1xuICAgICAgICAgICAgICAgIGZvcih2YXIgbmFtZSBpbiBmb3VuZCkge1xuICAgICAgICAgICAgICAgICAgICBmb3VuZFtuYW1lXSA9IG9ialtuYW1lXTtcbiAgICAgICAgICAgICAgICB9XG4gICAgICAgICAgICAgICAgcmVzb2x2ZSgpO1xuICAgICAgICAgICAgfSk7XG4gICAgICAgIH0pO1xuICAgIH1cblxuICAgIHB1YmxpYyBkZWxldGUgKGluZm86RW50aXR5SW5mbywgb2JqKTpQcm9taXNlPHZvaWQ+IHtcbiAgICAgICAgdmFyIGNvbGxlY3Rpb24gPSB0aGlzLmdldENvbGxlY3Rpb24oaW5mbyk7XG4gICAgICAgIHZhciByZXNvbHZlZCA9IGZhbHNlO1xuICAgICAgICByZXR1cm4gbmV3IFByb21pc2U8dm9pZD4oKHJlc29sdmUsIHJlamVjdCkgPT4ge1xuICAgICAgICAgICAgZm9yKHZhciBpPTA7IGk8Y29sbGVjdGlvbi5sZW5ndGg7IGkrKykge1xuICAgICAgICAgICAgICAgIGlmKHRoaXMubWF0Y2hlc0tleShpbmZvLCBvYmosIGNvbGxlY3Rpb25baV0pKSB7XG4gICAgICAgICAgICAgICAgICAgIGNvbGxlY3Rpb24uc3BsaWNlKGksIDEpO1xuICAgICAgICAgICAgICAgICAgICByZXNvbHZlZCA9IHRydWU7XG4gICAgICAgICAgICAgICAgICAgIHJlc29sdmUoKTtcbiAgICAgICAgICAgICAgICB9XG4gICAgICAgICAgICB9XG4gICAgICAgICAgICBpZighcmVzb2x2ZWQpIHtcbiAgICAgICAgICAgICAgICByZWplY3QoKTtcbiAgICAgICAgICAgIH1cbiAgICAgICAgfSk7XG4gICAgfVxuXG4gICAgcHVibGljIGZpbmQgKGluZm86RW50aXR5SW5mbywgY3JpdGVyaWE6T2JqZWN0KSA6IFByb21pc2U8QXJyYXk8YW55Pj4ge1xuICAgICAgICBmdW5jdGlvbiBhbGxGaWx0ZXIgKG9iaikgOiBib29sZWFuIHtyZXR1cm4gdHJ1ZTt9XG4gICAgICAgIGZ1bmN0aW9uIHN0cmljdEZpbHRlciAob2JqKSA6IGJvb2xlYW4ge1xuICAgICAgICAgICAgZm9yKHZhciBuYW1lIGluIGNyaXRlcmlhKSB7XG4gICAgICAgICAgICAgICAgaWYob2JqW25hbWVdICE9IGNyaXRlcmlhW25hbWVdKSB7XG4gICAgICAgICAgICAgICAgICAgIHJldHVybiBmYWxzZTtcbiAgICAgICAgICAgICAgICB9XG4gICAgICAgICAgICB9XG4gICAgICAgICAgICByZXR1cm4gdHJ1ZTtcbiAgICAgICAgfVxuXG4gICAgICAgIHJldHVybiBuZXcgUHJvbWlzZTxBcnJheTxhbnk+PigocmVzb2x2ZSwgcmVqZWN0KSA9PiB7XG4gICAgICAgICAgICB2YXIgY29sbGVjdGlvbiA9IHRoaXMuZ2V0Q29sbGVjdGlvbihpbmZvKSxcbiAgICAgICAgICAgICAgICBmaWx0ZXIgOiAoYW55KSA9PiBib29sZWFuO1xuICAgICAgICAgICAgaWYoY3JpdGVyaWEgPT0gbnVsbCkge1xuICAgICAgICAgICAgICAgIGZpbHRlciA9IGFsbEZpbHRlcjtcbiAgICAgICAgICAgIH0gZWxzZSB7XG4gICAgICAgICAgICAgICAgZmlsdGVyID0gc3RyaWN0RmlsdGVyO1xuICAgICAgICAgICAgfVxuICAgICAgICAgICAgcmVzb2x2ZShjb2xsZWN0aW9uLmZpbHRlcihmaWx0ZXIpKTtcbiAgICAgICAgfSk7XG4gICAgfVxuXG4gICAgcHVibGljIGZpbmRCeUtleSAoaW5mbzpFbnRpdHlJbmZvLCBrZXlWYWx1ZTpPYmplY3QpIDogUHJvbWlzZTxhbnk+IHtcbiAgICAgICAgdmFyIGNvbGxlY3Rpb24gPSB0aGlzLmdldENvbGxlY3Rpb24oaW5mbyk7XG4gICAgICAgIHJldHVybiBuZXcgUHJvbWlzZTxhbnk+KChyZXNvbHZlLCByZWplY3QpID0+IHtcbiAgICAgICAgICAgIGZvcih2YXIgaT0wOyBpPGNvbGxlY3Rpb24ubGVuZ3RoOyBpKyspIHtcbiAgICAgICAgICAgICAgICBpZih0aGlzLm1hdGNoZXNLZXkoaW5mbywga2V5VmFsdWUsIGNvbGxlY3Rpb25baV0pKSB7XG4gICAgICAgICAgICAgICAgICAgIHJlc29sdmUoY29sbGVjdGlvbltpXSk7XG4gICAgICAgICAgICAgICAgfVxuICAgICAgICAgICAgfVxuICAgICAgICAgICAgcmVqZWN0KCk7XG4gICAgICAgIH0pO1xuICAgIH1cblxuICAgIHByaXZhdGUgbWF0Y2hlc0tleSAoaW5mbzpFbnRpdHlJbmZvLCByZWYsIGN1cnJlbnQpIDogQm9vbGVhbiB7XG4gICAgICAgIGZvcih2YXIgaT0wOyBpPGluZm8uY29uZmlnLmtleS5sZW5ndGg7IGkrKykge1xuICAgICAgICAgICAgdmFyIG5hbWUgPSBpbmZvLmNvbmZpZy5rZXlbaV07XG4gICAgICAgICAgICBpZihyZWZbbmFtZV0gIT0gY3VycmVudFtuYW1lXSkge1xuICAgICAgICAgICAgICAgIHJldHVybiBmYWxzZTtcbiAgICAgICAgICAgIH1cbiAgICAgICAgfVxuICAgICAgICByZXR1cm4gdHJ1ZTtcbiAgICB9XG5cbiAgICBwcml2YXRlIGdldENvbGxlY3Rpb24gKGluZm86IEVudGl0eUluZm8pIDogQXJyYXk8YW55PiB7XG4gICAgICAgIGlmKCF0aGlzLm9iamVjdHNbaW5mby5jb25maWcubmFtZV0pIHtcbiAgICAgICAgICAgIHRoaXMub2JqZWN0c1tpbmZvLmNvbmZpZy5uYW1lXSA9IFtdO1xuICAgICAgICB9XG4gICAgICAgIHJldHVybiB0aGlzLm9iamVjdHNbaW5mby5jb25maWcubmFtZV07XG4gICAgfVxufSJdLCJzb3VyY2VSb290IjoiL3NvdXJjZS8ifQ==

@@ -1,16 +1,9 @@
-import EntityConfig = require('./EntityConfig');
-import EntityInfo = require('./EntityInfo');
-import Repository = require('./Repository');
-import Proxy = require('./Proxy');
-import UnitOfWork = require('./UnitOfWork');
-import ps = require('./PersistenceStrategy');
-import PersistenceStrategy = ps.PersistenceStrategy;
-declare class Talaria {
-    static EntityInfo: typeof EntityInfo;
-    static EntityConfig: typeof EntityConfig;
-    static Proxy: typeof Proxy;
-    static Repository: typeof Repository;
-    static UnitOfWork: typeof UnitOfWork;
+import EntityConfig from './EntityConfig';
+import EntityInfo from './EntityInfo';
+import Repository from './Repository';
+import UnitOfWork from './UnitOfWork';
+import { PersistenceStrategy } from './PersistenceStrategy';
+export default class Talaria {
     private static instance;
     static getInstance(): Talaria;
     private defaultStrategy;
@@ -23,4 +16,4 @@ declare class Talaria {
     getEntityInfo(name: string): EntityInfo;
     getRepository<T>(name: string): Repository<T>;
 }
-export = Talaria;
+export { EntityInfo, EntityConfig, Proxy, Repository, UnitOfWork };

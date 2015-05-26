@@ -10,4 +10,4 @@ class EntityConfig {
     }
 }
 
-export = EntityConfig;
+export default EntityConfig;

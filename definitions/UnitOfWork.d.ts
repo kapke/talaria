@@ -1,6 +1,5 @@
-import ps = require('./PersistenceStrategy');
-import PersistenceStrategy = ps.PersistenceStrategy;
-import EntityInfo = require('./EntityInfo');
+import { PersistenceStrategy } from './PersistenceStrategy';
+import EntityInfo from './EntityInfo';
 declare class UnitOfWork {
     private strategy;
     private newObjects;
@@ -16,4 +15,4 @@ declare class UnitOfWork {
     rollback(): void;
     private getProxy(info, obj);
 }
-export = UnitOfWork;
+export default UnitOfWork;

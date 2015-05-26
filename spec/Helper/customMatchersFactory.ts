@@ -59,4 +59,4 @@ class CustomMatchersFactory {
 
 var customMatchersFactory:CustomMatchersFactory = new CustomMatchersFactory();
 
-export = customMatchersFactory;
+export default customMatchersFactory;

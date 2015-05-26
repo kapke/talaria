@@ -1,6 +1,6 @@
-import EntityInfo = require('../../lib/EntityInfo');
-import EntityConfig = require('../../lib/EntityConfig');
-import Person = require('./Person');
+import EntityInfo from '../../lib/EntityInfo';
+import EntityConfig from '../../lib/EntityConfig';
+import Person from './Person';
 
 class PersonInfoFactory {
     public getPersonInfo ():EntityInfo {
@@ -10,4 +10,4 @@ class PersonInfoFactory {
 
 var factory:PersonInfoFactory = new PersonInfoFactory();
 
-export = factory;
+export default factory;

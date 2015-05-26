@@ -56,5 +56,7 @@ build/Release
 node_modules
 typings/
 .idea/
-lib/*.js
-lib/**/*.js
+lib/*.{js, js.map}
+lib/**/*.{js, js.map}
+spec/*.js
+spec/**/*.js

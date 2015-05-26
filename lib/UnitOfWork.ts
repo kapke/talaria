@@ -1,7 +1,6 @@
-import ps = require('./PersistenceStrategy');
-import PersistenceStrategy = ps.PersistenceStrategy;
-import Proxy = require('./Proxy');
-import EntityInfo = require('./EntityInfo');
+import {PersistenceStrategy} from './PersistenceStrategy';
+import Proxy from './Proxy';
+import EntityInfo from './EntityInfo';
 
 class TrackedObject {
     private info:EntityInfo;
@@ -86,4 +85,4 @@ class UnitOfWork {
         return new Proxy(obj, setters);
     }
 }
-export = UnitOfWork;
+export default UnitOfWork;

@@ -1,9 +1,8 @@
 /// <reference path="../../typings/es6-promise/es6-promise.d.ts" />
 /// <reference path="../../typings/node/node.d.ts" />
-import ps = require('../PersistenceStrategy');
-import PersistenceStrategy = ps.PersistenceStrategy;
-import EntityInfo = require('../EntityInfo');
-declare class InMemoryStrategy implements PersistenceStrategy {
+import { PersistenceStrategy } from '../PersistenceStrategy';
+import EntityInfo from '../EntityInfo';
+export default class InMemoryStrategy implements PersistenceStrategy {
     private objects;
     constructor();
     create(info: EntityInfo, obj: any): Promise<void>;
@@ -14,4 +13,3 @@ declare class InMemoryStrategy implements PersistenceStrategy {
     private matchesKey(info, ref, current);
     private getCollection(info);
 }
-export = InMemoryStrategy;

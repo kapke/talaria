@@ -1,6 +1,6 @@
-import EntityConfig = require('./EntityConfig');
+import EntityConfig from './EntityConfig';
 
-class EntityInfo {
+export default class EntityInfo {
     public entity:any;
     public config:EntityConfig;
 
@@ -9,5 +9,3 @@ class EntityInfo {
         this.config = config;
     }
 }
-
-export = EntityInfo;

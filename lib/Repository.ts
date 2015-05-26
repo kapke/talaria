@@ -1,11 +1,9 @@
-import EntityInfo = require('./EntityInfo');
-import UnitOfWork = require('./UnitOfWork');
-import ps = require('./PersistenceStrategy');
-import PersistenceStrategy = ps.PersistenceStrategy;
-import rsvp = require('es6-promise');
-import Promise = rsvp.Promise;
+import EntityInfo from './EntityInfo';
+import UnitOfWork from './UnitOfWork';
+import {PersistenceStrategy} from './PersistenceStrategy';
+import {Promise} from 'es6-promise';
 
-class Repository<T> {
+export default class Repository<T> {
     private entityInfo:EntityInfo;
     //should be used only for writing actions
     private unitOfWork:UnitOfWork;
@@ -61,5 +59,3 @@ class Repository<T> {
         });
     }
 }
-
-export = Repository;

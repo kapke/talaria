@@ -1,6 +1,6 @@
 ///<reference path="../typings/jasmine/jasmine.d.ts" />
 
-import Proxy = require('../lib/Proxy');
+import Proxy from '../lib/Proxy';
 
 describe('Proxy', () => {
     var obj,

@@ -5,6 +5,8 @@ var gulp = require('gulp'),
     concat = require('gulp-concat'),
     sourcemaps = require('gulp-sourcemaps'),
     src = ['lib/*.ts', 'lib/**/*.ts', 'typings/**/*.ts'],
+    testsSrc = ['spec/*.ts', 'spec/**/*.ts', 'typings/**/*.ts'],
+    testsDest = 'spec',
     dest = {
         definitions: 'definitions',
         commonjs: 'dist/commonjs',
@@ -34,20 +36,22 @@ function buildDefinitions () {
 function buildCommonJs () {
     return gulp
         .src(src)
+        .pipe(sourcemaps.init())
         .pipe(ts({
             typescript: require('typescript'),
             module: 'commonjs',
             target: 'ES5'
         }))
         .js
-        .pipe(sourcemaps.write())
         .pipe(gulp.dest(dest.commonjs))
+        .pipe(sourcemaps.write())
         .pipe(gulp.dest(dest.lib));
 }
 
 function buildAmd () {
     return gulp
         .src(src)
+        .pipe(sourcemaps.init())
         .pipe(ts({
             typescript: require('typescript'),
             module: 'amd',
@@ -62,6 +66,7 @@ function buildSingle () {
     //TODO: refactor talaria into state where browserified talaria.js should contain whole project
     return gulp
         .src(src)
+        .pipe(sourcemaps.init())
         .pipe(ts({
             typescript: require('typescript'),
             module: 'commonjs',
@@ -72,7 +77,22 @@ function buildSingle () {
         .pipe(sourcemaps.write())
         .pipe(gulp.dest(dest.browser))
         .pipe(concat(dest.single.fileName))
-        .pipe(gulp.dest(dest.single.dir))
+        .pipe(gulp.dest(dest.single.dir));
+}
+
+function buildTests () {
+    return gulp
+        .src(testsSrc)
+        .pipe(sourcemaps.init())
+        .pipe(ts({
+            typescript: require('typescript'),
+            module: 'commonjs',
+            target: 'ES5',
+            sourceMap: true
+        }))
+        .js
+        .pipe(sourcemaps.write())
+        .pipe(gulp.dest(testsDest));
 }
 
 gulp.task('build', function () {
@@ -80,6 +100,7 @@ gulp.task('build', function () {
         buildCommonJs(),
         buildDefinitions(),
         buildAmd(),
-        buildSingle()
+        buildSingle(),
+        buildTests()
     ]);
 });

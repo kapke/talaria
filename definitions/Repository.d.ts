@@ -1,8 +1,7 @@
-import EntityInfo = require('./EntityInfo');
-import UnitOfWork = require('./UnitOfWork');
-import ps = require('./PersistenceStrategy');
-import PersistenceStrategy = ps.PersistenceStrategy;
-declare class Repository<T> {
+import EntityInfo from './EntityInfo';
+import UnitOfWork from './UnitOfWork';
+import { PersistenceStrategy } from './PersistenceStrategy';
+export default class Repository<T> {
     private entityInfo;
     private unitOfWork;
     private persistenceStrategy;
@@ -14,4 +13,3 @@ declare class Repository<T> {
     findAll(): Promise<Array<T>>;
     has(obj: T): Promise<boolean>;
 }
-export = Repository;
