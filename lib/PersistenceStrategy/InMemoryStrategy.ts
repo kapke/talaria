@@ -1,13 +1,11 @@
 ///<reference path="../../typings/es6-promise/es6-promise.d.ts" />
 ///<reference path="../../typings/node/node.d.ts" />
 
-import ps = require('../PersistenceStrategy');
-import PersistenceStrategy = ps.PersistenceStrategy;
-import EntityInfo = require('../EntityInfo');
-import rsvp = require('es6-promise');
-import Promise = rsvp.Promise;
+import {PersistenceStrategy} from '../PersistenceStrategy';
+import EntityInfo from '../EntityInfo';
+import {Promise} from 'es6-promise';
 
-class InMemoryStrategy implements PersistenceStrategy {
+export default class InMemoryStrategy implements PersistenceStrategy {
     private objects:{[name:string]:Array<any>} = {};
 
     public constructor () {}
@@ -21,10 +19,13 @@ class InMemoryStrategy implements PersistenceStrategy {
     }
 
     public update (info:EntityInfo, obj):Promise<void> {
-        return this.findByKey(info, obj).then((found) => {
-            for(var name in found) {
-                found[name] = obj[name];
-            }
+        return new Promise<void>((resolve) => {
+            this.findByKey(info, obj).then((found) => {
+                for(var name in found) {
+                    found[name] = obj[name];
+                }
+                resolve();
+            });
         });
     }
 
@@ -97,4 +98,3 @@ class InMemoryStrategy implements PersistenceStrategy {
         return this.objects[info.config.name];
     }
 }
-export = InMemoryStrategy;

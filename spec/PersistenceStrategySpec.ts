@@ -4,21 +4,20 @@
 ///<reference path="../typings/jasmine/jasmine.d.ts" />
 ///<reference path="../typings/node/node.d.ts" />
 
-import ps = require('../lib/PersistenceStrategy');
-import PersistenceStrategy = ps.PersistenceStrategy;
-import EntityInfo = require('../lib/EntityInfo');
-import Person = require('./Helper/Person');
-import personInfoFactory = require('./Helper/personInfoFactory');
-import customMatchersFactory = require('./Helper/customMatchersFactory');
+import {PersistenceStrategy} from '../lib/PersistenceStrategy';
+import EntityInfo from '../lib/EntityInfo';
+import Person from './Helper/Person';
+import personInfoFactory from './Helper/personInfoFactory';
+import customMatchersFactory from './Helper/customMatchersFactory';
 
-module.exports = function strategySpec (strategyName : String, strategyFactory : () => PersistenceStrategy) : void {
+export default function strategySpec (strategyName : String, strategyFactory : () => PersistenceStrategy) : void {
     describe(strategyName + ' Persistence Strategy', () => {
-        var strategy,
+        var strategy:PersistenceStrategy,
             obj:Person,
             info:EntityInfo;
         beforeEach((done) => {
             jasmine.addMatchers(customMatchersFactory);
-            strategy = strategyFactory();
+            strategy = <PersistenceStrategy>strategyFactory();
             obj = new Person('Ala', 'Makota', 1);
             info = personInfoFactory.getPersonInfo();
             strategy.create(info, obj).then(() => {

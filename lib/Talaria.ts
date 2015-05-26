@@ -1,19 +1,12 @@
-import EntityConfig = require('./EntityConfig');
-import EntityInfo = require('./EntityInfo');
-import Repository = require('./Repository');
-import Proxy = require('./Proxy');
-import UnitOfWork = require('./UnitOfWork');
-import ps = require('./PersistenceStrategy');
-import PersistenceStrategy = ps.PersistenceStrategy;
-import InMemoryStrategy = require('./PersistenceStrategy/InMemoryStrategy');
+import EntityConfig from './EntityConfig';
+import EntityInfo from './EntityInfo';
+import Repository from './Repository';
+import Proxy from './Proxy';
+import UnitOfWork from './UnitOfWork';
+import {PersistenceStrategy} from './PersistenceStrategy';
+import InMemoryStrategy from './PersistenceStrategy/InMemoryStrategy';
 
-class Talaria {
-    public static EntityInfo = EntityInfo;
-    public static EntityConfig = EntityConfig;
-    public static Proxy = Proxy;
-    public static Repository = Repository;
-    public static UnitOfWork = UnitOfWork;
-
+export default class Talaria {
     private static instance : Talaria;
 
     public static getInstance () : Talaria {
@@ -33,7 +26,7 @@ class Talaria {
     }
 
     /*
-        Probably this should be removed and moved setting default strategy
+        Probably this should be removed and setting default strategy
         should be done in constructor
      */
     set DefaultStrategy(value:PersistenceStrategy) {
@@ -61,4 +54,4 @@ class Talaria {
     }
 }
 
-export = Talaria;
+export {EntityInfo, EntityConfig, Proxy, Repository, UnitOfWork};

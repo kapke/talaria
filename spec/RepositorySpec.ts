@@ -1,12 +1,11 @@
 ///<reference path="../typings/jasmine/jasmine.d.ts" />
 
-import Repository = require('../lib/Repository');
-import UnitOfWork = require('../lib/UnitOfWork');
-import ps = require('../lib/PersistenceStrategy');
-import PersistenceStrategy = ps.PersistenceStrategy;
-import InMemoryStrategy = require('../lib/PersistenceStrategy/InMemoryStrategy');
-import Person = require('./Helper/Person');
-import personInfoFactory = require('./Helper/personInfoFactory');
+import Repository from '../lib/Repository';
+import UnitOfWork from '../lib/UnitOfWork';
+import PersistenceStrategy from '../lib/PersistenceStrategy';
+import InMemoryStrategy from '../lib/PersistenceStrategy/InMemoryStrategy';
+import Person from './Helper/Person';
+import personInfoFactory from './Helper/personInfoFactory';
 
 describe('Repository', () => {
     var repository : Repository<Object>,

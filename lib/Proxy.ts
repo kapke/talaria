@@ -42,4 +42,4 @@ class Proxy {
     }
 }
 
-export = Proxy;
+export default Proxy;

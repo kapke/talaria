@@ -1,9 +1,8 @@
 ///<reference path="../typings/es6-promise/es6-promise.d.ts" />
 ///<reference path="../typings/node/node.d.ts" />
 
-import EntityInfo = require('./EntityInfo');
-import rsvp = require('es6-promise');
-import Promise = rsvp.Promise;
+import EntityInfo from './EntityInfo';
+import {Promise} from 'es6-promise';
 
 export interface PersistenceStrategy {
     create (entityInfo:EntityInfo, obj:any):Promise<void>;

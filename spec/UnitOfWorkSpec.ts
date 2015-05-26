@@ -1,12 +1,11 @@
 ///<reference path="../typings/jasmine/jasmine.d.ts" />
 
-import UnitOfWork = require('../lib/UnitOfWork');
-import ps = require('../lib/PersistenceStrategy');
-import PersistenceStrategy = ps.PersistenceStrategy;
-import EntityInfo = require('../lib/EntityInfo');
-import EntityConfig = require('../lib/EntityConfig');
-import Person = require('./Helper/Person');
-import personInfoFactory = require('./Helper/personInfoFactory');
+import UnitOfWork from '../lib/UnitOfWork';
+import {PersistenceStrategy} from '../lib/PersistenceStrategy';
+import EntityInfo from '../lib/EntityInfo';
+import EntityConfig from '../lib/EntityConfig';
+import Person from './Helper/Person';
+import personInfoFactory from './Helper/personInfoFactory';
 
 class FakeStrategy implements PersistenceStrategy {
     public create(info:EntityInfo, obj:any):Promise<void> {
