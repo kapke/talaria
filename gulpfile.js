@@ -1,8 +1,6 @@
 var gulp = require('gulp'),
     ts = require('gulp-typescript'),
     merge = require('merge2'),
-    browserify = require('gulp-browserify'),
-    concat = require('gulp-concat'),
     sourcemaps = require('gulp-sourcemaps'),
     src = ['lib/*.ts', 'lib/**/*.ts', 'typings/**/*.ts'],
     testsSrc = ['spec/*.ts', 'spec/**/*.ts', 'typings/**/*.ts'],
@@ -33,19 +31,23 @@ function buildDefinitions () {
         .pipe(gulp.dest(dest.definitions));
 }
 
-function buildCommonJs () {
-    return gulp
-        .src(src)
-        .pipe(sourcemaps.init())
-        .pipe(ts({
-            typescript: require('typescript'),
-            module: 'commonjs',
-            target: 'ES5'
-        }))
-        .js
-        .pipe(gulp.dest(dest.commonjs))
-        .pipe(sourcemaps.write())
-        .pipe(gulp.dest(dest.lib));
+function buildCommonJs (dist) {
+   var stream = gulp.src(src);
+   if(!dist) {
+       stream = stream.pipe(sourcemaps.init())
+   }
+   stream = stream.pipe(ts({
+        typescript: require('typescript'),
+        module: 'commonjs',
+        target: 'ES5'
+    })).js;
+    if(dist) {
+        stream = stream.pipe(gulp.dest(dest.commonjs));
+    } else {
+        stream = stream.pipe(sourcemaps.write())
+            .pipe(gulp.dest(dest.lib));
+    }
+    return stream;
 }
 
 function buildAmd () {
@@ -58,26 +60,7 @@ function buildAmd () {
             target: 'ES5'
         }))
         .js
-        .pipe(sourcemaps.write())
         .pipe(gulp.dest(dest.amd));
-}
-
-function buildSingle () {
-    //TODO: refactor talaria into state where browserified talaria.js should contain whole project
-    return gulp
-        .src(src)
-        .pipe(sourcemaps.init())
-        .pipe(ts({
-            typescript: require('typescript'),
-            module: 'commonjs',
-            target: 'ES5'
-        }))
-        .js
-        .pipe(browserify({}))
-        .pipe(sourcemaps.write())
-        .pipe(gulp.dest(dest.browser))
-        .pipe(concat(dest.single.fileName))
-        .pipe(gulp.dest(dest.single.dir));
 }
 
 function buildTests () {
@@ -95,12 +78,16 @@ function buildTests () {
         .pipe(gulp.dest(testsDest));
 }
 
-gulp.task('build', function () {
+gulp.task('build-dist', function () {
+    return merge([
+        buildCommonJs(true),
+        buildDefinitions(),
+        buildAmd()
+    ]);
+});
+gulp.task('build-dev', function () {
     return merge([
         buildCommonJs(),
-        buildDefinitions(),
-        buildAmd(),
-        buildSingle(),
         buildTests()
     ]);
 });
