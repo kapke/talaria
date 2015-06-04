@@ -10,17 +10,16 @@ export default class InMemoryStrategy implements PersistenceStrategy {
 
     public constructor () {}
 
-    public create (info:EntityInfo, obj):Promise<void> {
+    public create<T> (info:EntityInfo<T>, obj:T):Promise<void> {
         return new Promise<void>((resolve, reject) => {
-            this.objects[info.config.name] = this.objects[info.config.name] || [];
-            this.objects[info.config.name].push(obj);
+            this.getCollection(info).push(info.mapper.toObject(obj));
             resolve();
         });
     }
 
-    public update (info:EntityInfo, obj):Promise<void> {
+    public update<T> (info:EntityInfo<T>, obj:T):Promise<void> {
         return new Promise<void>((resolve) => {
-            this.findByKey(info, obj).then((found) => {
+            this.findByKey(info, info.mapper.toObject(obj)).then((found) => {
                 for(var name in found) {
                     found[name] = obj[name];
                 }
@@ -29,7 +28,7 @@ export default class InMemoryStrategy implements PersistenceStrategy {
         });
     }
 
-    public delete (info:EntityInfo, obj):Promise<void> {
+    public delete<T> (info:EntityInfo<T>, obj:T):Promise<void> {
         var collection = this.getCollection(info);
         var resolved = false;
         return new Promise<void>((resolve, reject) => {
@@ -46,7 +45,7 @@ export default class InMemoryStrategy implements PersistenceStrategy {
         });
     }
 
-    public find (info:EntityInfo, criteria:Object) : Promise<Array<any>> {
+    public find<T> (info:EntityInfo<T>, criteria:Object) : Promise<Array<T>> {
         function allFilter (obj) : boolean {return true;}
         function strictFilter (obj) : boolean {
             for(var name in criteria) {
@@ -57,7 +56,7 @@ export default class InMemoryStrategy implements PersistenceStrategy {
             return true;
         }
 
-        return new Promise<Array<any>>((resolve, reject) => {
+        return new Promise<Array<T>>((resolve, reject) => {
             var collection = this.getCollection(info),
                 filter : (any) => boolean;
             if(criteria == null) {
@@ -65,13 +64,15 @@ export default class InMemoryStrategy implements PersistenceStrategy {
             } else {
                 filter = strictFilter;
             }
-            resolve(collection.filter(filter));
+            resolve(collection
+                .filter(filter)
+                .map(info.mapper.fromObject));
         });
     }
 
-    public findByKey (info:EntityInfo, keyValue:Object) : Promise<any> {
+    public findByKey<T> (info:EntityInfo<T>, keyValue:Object) : Promise<T> {
         var collection = this.getCollection(info);
-        return new Promise<any>((resolve, reject) => {
+        return new Promise<T>((resolve, reject) => {
             for(var i=0; i<collection.length; i++) {
                 if(this.matchesKey(info, keyValue, collection[i])) {
                     resolve(collection[i]);
@@ -81,7 +82,7 @@ export default class InMemoryStrategy implements PersistenceStrategy {
         });
     }
 
-    private matchesKey (info:EntityInfo, ref, current) : Boolean {
+    private matchesKey<T> (info:EntityInfo<T>, ref, current) : Boolean {
         for(var i=0; i<info.config.key.length; i++) {
             var name = info.config.key[i];
             if(ref[name] != current[name]) {
@@ -91,7 +92,7 @@ export default class InMemoryStrategy implements PersistenceStrategy {
         return true;
     }
 
-    private getCollection (info: EntityInfo) : Array<any> {
+    private getCollection<T> (info: EntityInfo<T>) : Array<any> {
         if(!this.objects[info.config.name]) {
             this.objects[info.config.name] = [];
         }

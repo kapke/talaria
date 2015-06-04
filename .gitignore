@@ -60,3 +60,4 @@ lib/*.{js, js.map}
 lib/**/*.{js, js.map}
 spec/*.js
 spec/**/*.js
+.settings/

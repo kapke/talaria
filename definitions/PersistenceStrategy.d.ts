@@ -2,8 +2,8 @@
 /// <reference path="../typings/node/node.d.ts" />
 import EntityInfo from './EntityInfo';
 export interface PersistenceStrategy {
-    create(entityInfo: EntityInfo, obj: any): Promise<void>;
-    update(entityInfo: EntityInfo, obj: any): Promise<void>;
-    delete(entityInfo: EntityInfo, obj: any): Promise<void>;
-    find(entityInfo: EntityInfo, criteria: Object): Promise<Array<any>>;
+    create<T>(entityInfo: EntityInfo<T>, obj: T): Promise<void>;
+    update<T>(entityInfo: EntityInfo<T>, obj: T): Promise<void>;
+    delete<T>(entityInfo: EntityInfo<T>, obj: T): Promise<void>;
+    find<T>(entityInfo: EntityInfo<T>, criteria: Object): Promise<Array<T>>;
 }

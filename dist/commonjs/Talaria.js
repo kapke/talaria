@@ -44,8 +44,8 @@ var Talaria = (function () {
         enumerable: true,
         configurable: true
     });
-    Talaria.prototype.registerEntity = function (constructor, config) {
-        this.entities[config.name] = new EntityInfo_1.default(constructor, config);
+    Talaria.prototype.registerEntity = function (constructor, config, mapper) {
+        this.entities[config.name] = new EntityInfo_1.default(constructor, config, mapper);
     };
     Talaria.prototype.getEntityInfo = function (name) {
         return this.entities[name];

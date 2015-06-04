@@ -3,17 +3,17 @@ import Proxy from './Proxy';
 import EntityInfo from './EntityInfo';
 
 class TrackedObject {
-    private info:EntityInfo;
+    private info:EntityInfo<any>;
     private object:any;
     private proxy:Proxy;
 
-    get Info():EntityInfo {return this.info;}
+    get Info():EntityInfo<any> {return this.info;}
 
     get Object():any {return this.object;}
 
     get Proxy():Proxy {return this.proxy;}
 
-    constructor (info:EntityInfo, object:any, proxy:Proxy) {
+    constructor (info:EntityInfo<any>, object:any, proxy:Proxy) {
         this.info = info;
         this.object = object;
         this.proxy = proxy;
@@ -31,25 +31,25 @@ class UnitOfWork {
         this.strategy = strategy;
     }
 
-    public registerNew (info:EntityInfo, obj) : Object {
+    public registerNew (info:EntityInfo<any>, obj) : Object {
         var tracker:TrackedObject = new TrackedObject(info, obj, this.getProxy(info, obj));
         this.newObjects.push(tracker);
         return tracker.Proxy;
     }
 
-    public registerFetched (info:EntityInfo, obj) : Object {
+    public registerFetched (info:EntityInfo<any>, obj) : Object {
         var tracker:TrackedObject = new TrackedObject(info, obj, this.getProxy(info, obj));
         this.fetchedObjects.push(tracker);
         return tracker.Proxy;
     }
 
-    public registerDirty (info:EntityInfo, obj) : Object {
+    public registerDirty (info:EntityInfo<any>, obj) : Object {
         var tracker:TrackedObject = new TrackedObject(info, obj, this.getProxy(info, obj));
         this.dirtyObjects.push(tracker);
         return tracker.Proxy;
     }
 
-    public registerDeleted (info:EntityInfo, obj) : Object {
+    public registerDeleted (info:EntityInfo<any>, obj) : Object {
         var tracker:TrackedObject = new TrackedObject(info, obj, this.getProxy(info, obj));
         this.deletedObjects.push(tracker);
         return tracker.Proxy;
@@ -71,10 +71,10 @@ class UnitOfWork {
 
     public rollback () {}
 
-    private getProxy (info:EntityInfo, obj):Proxy {
+    private getProxy (info:EntityInfo<any>, obj):Proxy {
         var setters = {};
 
-        function modificationHandler (info:EntityInfo, target, name, value) {
+        function modificationHandler (info:EntityInfo<any>, target, name, value) {
             this.registerDirty(info, target);
             target[name] = value;
         }

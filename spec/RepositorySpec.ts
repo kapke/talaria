@@ -2,7 +2,7 @@
 
 import Repository from '../lib/Repository';
 import UnitOfWork from '../lib/UnitOfWork';
-import PersistenceStrategy from '../lib/PersistenceStrategy';
+import {PersistenceStrategy} from '../lib/PersistenceStrategy';
 import InMemoryStrategy from '../lib/PersistenceStrategy/InMemoryStrategy';
 import Person from './Helper/Person';
 import personInfoFactory from './Helper/personInfoFactory';

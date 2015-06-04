@@ -6,7 +6,7 @@ export default class Repository<T> {
     private unitOfWork;
     private persistenceStrategy;
     private cache;
-    constructor(entityInfo: EntityInfo, unitOfWork: UnitOfWork, persistenceStrategy: PersistenceStrategy);
+    constructor(entityInfo: EntityInfo<T>, unitOfWork: UnitOfWork, persistenceStrategy: PersistenceStrategy);
     add(obj: T): Promise<T>;
     remove(obj: T): Promise<void>;
     findOne(): Promise<T>;

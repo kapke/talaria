@@ -3,6 +3,7 @@ import EntityInfo from './EntityInfo';
 import Repository from './Repository';
 import UnitOfWork from './UnitOfWork';
 import { PersistenceStrategy } from './PersistenceStrategy';
+import { Mapper } from './Mapper';
 export default class Talaria {
     private static instance;
     static getInstance(): Talaria;
@@ -12,8 +13,8 @@ export default class Talaria {
     private repositories;
     DefaultStrategy: PersistenceStrategy;
     DefaultUnitOfWork: UnitOfWork;
-    registerEntity(constructor: any, config: EntityConfig): void;
-    getEntityInfo(name: string): EntityInfo;
+    registerEntity<T>(constructor: any, config: EntityConfig, mapper: Mapper<T>): void;
+    getEntityInfo(name: string): EntityInfo<any>;
     getRepository<T>(name: string): Repository<T>;
 }
-export { EntityInfo, EntityConfig, Proxy, Repository, UnitOfWork };
+export { EntityInfo, EntityConfig, Proxy, Repository, UnitOfWork, PersistenceStrategy, Mapper };

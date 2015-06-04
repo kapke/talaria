@@ -5,11 +5,11 @@ import EntityInfo from '../EntityInfo';
 export default class InMemoryStrategy implements PersistenceStrategy {
     private objects;
     constructor();
-    create(info: EntityInfo, obj: any): Promise<void>;
-    update(info: EntityInfo, obj: any): Promise<void>;
-    delete(info: EntityInfo, obj: any): Promise<void>;
-    find(info: EntityInfo, criteria: Object): Promise<Array<any>>;
-    findByKey(info: EntityInfo, keyValue: Object): Promise<any>;
-    private matchesKey(info, ref, current);
-    private getCollection(info);
+    create<T>(info: EntityInfo<T>, obj: T): Promise<void>;
+    update<T>(info: EntityInfo<T>, obj: T): Promise<void>;
+    delete<T>(info: EntityInfo<T>, obj: T): Promise<void>;
+    find<T>(info: EntityInfo<T>, criteria: Object): Promise<Array<T>>;
+    findByKey<T>(info: EntityInfo<T>, keyValue: Object): Promise<T>;
+    private matchesKey<T>(info, ref, current);
+    private getCollection<T>(info);
 }

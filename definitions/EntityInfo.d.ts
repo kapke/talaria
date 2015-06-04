@@ -1,6 +1,8 @@
 import EntityConfig from './EntityConfig';
-export default class EntityInfo {
+import { Mapper } from './Mapper';
+export default class EntityInfo<T> {
     entity: any;
     config: EntityConfig;
-    constructor(entity: any, config: EntityConfig);
+    mapper: Mapper<T>;
+    constructor(entity: any, config: EntityConfig, mapper: Mapper<T>);
 }

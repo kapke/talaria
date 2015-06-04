@@ -14,7 +14,7 @@ export default function strategySpec (strategyName : String, strategyFactory : (
     describe(strategyName + ' Persistence Strategy', () => {
         var strategy:PersistenceStrategy,
             obj:Person,
-            info:EntityInfo;
+            info:EntityInfo<Person>;
         beforeEach((done) => {
             jasmine.addMatchers(customMatchersFactory);
             strategy = <PersistenceStrategy>strategyFactory();
@@ -42,7 +42,6 @@ export default function strategySpec (strategyName : String, strategyFactory : (
             strategy.update(info, modified).then(() => {
                 strategy.find(info, modified).then((received) => {
                     expect(received).toContainLookingSame(modified);
-                    expect(obj).toLookSame(modified);
                     done();
                 });
             });
@@ -60,6 +59,21 @@ export default function strategySpec (strategyName : String, strategyFactory : (
                 expect(received).toEqual([obj]);
                 done();
            });
+        });
+        it('should use given mapper for transforming data into entity', (done) => {
+            spyOn(info.mapper, 'fromObject');
+            strategy.find(info, obj).then((received) => {
+                expect(info.mapper.fromObject).toHaveBeenCalled();
+                done();  
+            });
+        });
+        it('should use given mapper for transforming entity into plain object', (done) => {
+            spyOn(info.mapper, 'toObject');
+            var basia:Person = new Person('Basia', 'Mapieska', 2);
+            strategy.create(info, basia).then(() => {
+                expect(info.mapper.toObject).toHaveBeenCalledWith(basia);
+                done();  
+            });
         });
     });
 };

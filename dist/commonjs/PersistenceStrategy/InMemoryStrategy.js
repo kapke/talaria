@@ -8,15 +8,14 @@ var InMemoryStrategy = (function () {
     InMemoryStrategy.prototype.create = function (info, obj) {
         var _this = this;
         return new es6_promise_1.Promise(function (resolve, reject) {
-            _this.objects[info.config.name] = _this.objects[info.config.name] || [];
-            _this.objects[info.config.name].push(obj);
+            _this.getCollection(info).push(info.mapper.toObject(obj));
             resolve();
         });
     };
     InMemoryStrategy.prototype.update = function (info, obj) {
         var _this = this;
         return new es6_promise_1.Promise(function (resolve) {
-            _this.findByKey(info, obj).then(function (found) {
+            _this.findByKey(info, info.mapper.toObject(obj)).then(function (found) {
                 for (var name in found) {
                     found[name] = obj[name];
                 }
@@ -60,7 +59,9 @@ var InMemoryStrategy = (function () {
             else {
                 filter = strictFilter;
             }
-            resolve(collection.filter(filter));
+            resolve(collection
+                .filter(filter)
+                .map(info.mapper.fromObject));
         });
     };
     InMemoryStrategy.prototype.findByKey = function (info, keyValue) {

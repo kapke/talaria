@@ -4,14 +4,14 @@ import {PersistenceStrategy} from './PersistenceStrategy';
 import {Promise} from 'es6-promise';
 
 export default class Repository<T> {
-    private entityInfo:EntityInfo;
+    private entityInfo:EntityInfo<T>;
     //should be used only for writing actions
     private unitOfWork:UnitOfWork;
     //should be used only for reading actions
     private persistenceStrategy:PersistenceStrategy;
     private cache:T[] = [];
 
-	constructor (entityInfo:EntityInfo, unitOfWork:UnitOfWork, persistenceStrategy: PersistenceStrategy) {
+	constructor (entityInfo:EntityInfo<T>, unitOfWork:UnitOfWork, persistenceStrategy: PersistenceStrategy) {
         this.entityInfo = entityInfo;
         this.unitOfWork = unitOfWork;
         this.persistenceStrategy = persistenceStrategy;

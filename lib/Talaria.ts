@@ -5,6 +5,7 @@ import Proxy from './Proxy';
 import UnitOfWork from './UnitOfWork';
 import {PersistenceStrategy} from './PersistenceStrategy';
 import InMemoryStrategy from './PersistenceStrategy/InMemoryStrategy';
+import {Mapper} from './Mapper';
 
 export default class Talaria {
     private static instance : Talaria;
@@ -18,7 +19,7 @@ export default class Talaria {
 
     private defaultStrategy : PersistenceStrategy = new InMemoryStrategy();
     private unitOfWork : UnitOfWork = new UnitOfWork(this.defaultStrategy);
-    private entities : {[name:string]:EntityInfo} = {};
+    private entities : {[name:string]:EntityInfo<any>} = {};
     private repositories : {[name:string]:Repository<any>} = {};
 
     get DefaultStrategy():PersistenceStrategy {
@@ -38,11 +39,11 @@ export default class Talaria {
         return this.unitOfWork;
     }
 
-    public registerEntity (constructor:any, config:EntityConfig) {
-        this.entities[config.name] = new EntityInfo(constructor, config);
+    public registerEntity<T> (constructor:any, config:EntityConfig, mapper:Mapper<T>) {
+        this.entities[config.name] = new EntityInfo<T>(constructor, config, mapper);
     }
 
-    public getEntityInfo (name:string) : EntityInfo {
+    public getEntityInfo (name:string) : EntityInfo<any> {
         return this.entities[name];
     }
 
@@ -54,4 +55,4 @@ export default class Talaria {
     }
 }
 
-export {EntityInfo, EntityConfig, Proxy, Repository, UnitOfWork};
+export {EntityInfo, EntityConfig, Proxy, Repository, UnitOfWork, PersistenceStrategy, Mapper};

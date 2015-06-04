@@ -7,10 +7,10 @@ declare class UnitOfWork {
     private fetchedObjects;
     private deletedObjects;
     constructor(strategy: PersistenceStrategy);
-    registerNew(info: EntityInfo, obj: any): Object;
-    registerFetched(info: EntityInfo, obj: any): Object;
-    registerDirty(info: EntityInfo, obj: any): Object;
-    registerDeleted(info: EntityInfo, obj: any): Object;
+    registerNew(info: EntityInfo<any>, obj: any): Object;
+    registerFetched(info: EntityInfo<any>, obj: any): Object;
+    registerDirty(info: EntityInfo<any>, obj: any): Object;
+    registerDeleted(info: EntityInfo<any>, obj: any): Object;
     commit(): void;
     rollback(): void;
     private getProxy(info, obj);
