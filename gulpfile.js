@@ -63,7 +63,6 @@ function buildAmd () {
 }
 
 function buildSingle () {
-    //TODO: refactor talaria into state where browserified talaria.js should contain whole project
     return gulp
         .src(src)
         .pipe(sourcemaps.init())
@@ -95,12 +94,18 @@ function buildTests () {
         .pipe(gulp.dest(testsDest));
 }
 
-gulp.task('build', function () {
+gulp.task('build-dist', function () {
     return merge([
         buildCommonJs(),
         buildDefinitions(),
         buildAmd(),
         buildSingle(),
+        buildTests()
+    ]);
+});
+gulp.task('build-dev', function () {
+    return merge([
+        buildCommonJs(),
         buildTests()
     ]);
 });
