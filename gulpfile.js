@@ -1,6 +1,7 @@
 var gulp = require('gulp'),
     ts = require('gulp-typescript'),
     merge = require('merge2'),
+    watch = require('gulp-watch'),
     sourcemaps = require('gulp-sourcemaps'),
     src = ['lib/*.ts', 'lib/**/*.ts', 'typings/**/*.ts'],
     testsSrc = ['spec/*.ts', 'spec/**/*.ts', 'typings/**/*.ts'],
@@ -44,7 +45,8 @@ function buildCommonJs (dist) {
     if(dist) {
         stream = stream.pipe(gulp.dest(dest.commonjs));
     } else {
-        stream = stream.pipe(sourcemaps.write())
+        stream = stream
+            .pipe(sourcemaps.write())
             .pipe(gulp.dest(dest.lib));
     }
     return stream;
@@ -90,4 +92,16 @@ gulp.task('build-dev', function () {
         buildCommonJs(),
         buildTests()
     ]);
+});
+gulp.task('watch', function (done) {
+   watch(src, function () {
+       console.log('Building...');
+       buildCommonJs();
+       console.log('Talaria built');
+   });
+   watch(testsSrc, function () {
+       console.log('Building tests...');
+       buildTests();
+       console.log('Tests built');
+   });
 });

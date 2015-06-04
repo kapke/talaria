@@ -5,7 +5,7 @@
   "main": "./dist/commonjs/Talaria.js",
   "scripts": {
     "test": "jasmine",
-    "build": "gulp build"
+    "build": "gulp build-dist"
   },
   "author": "",
   "license": "ISC",
@@ -13,12 +13,10 @@
     "es6-promise": "^2.0.1"
   },
   "devDependencies": {
-    "browserify": "^9.0.8",
     "gulp": "^3.8.11",
-    "gulp-browserify": "^0.5.1",
-    "gulp-concat": "^2.5.2",
     "gulp-sourcemaps": "^1.5.1",
     "gulp-typescript": "^2.6.0",
+    "gulp-watch": "^4.2.4",
     "jasmine": "^2.2.1",
     "merge2": "^0.3.4",
     "typescript": "^1.5"
