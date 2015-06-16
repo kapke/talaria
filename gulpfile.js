@@ -3,14 +3,20 @@ var gulp = require('gulp'),
     merge = require('merge2'),
     watch = require('gulp-watch'),
     sourcemaps = require('gulp-sourcemaps'),
+    karma = require('gulp-karma'),
+    concat = require('gulp-concat'),
+    browserify = require('browserify'),
+    glob = require('glob'),
+    source = require('vinyl-source-stream'),
+    jasmine = require('gulp-jasmine'),
     src = ['lib/*.ts', 'lib/**/*.ts', 'typings/**/*.ts'],
     testsSrc = ['spec/*.ts', 'spec/**/*.ts', 'typings/**/*.ts'],
+    testCompiled = 'spec/*Spec.js',
     testsDest = 'spec',
     dest = {
         definitions: 'definitions',
         commonjs: 'dist/commonjs',
         amd: 'dist/amd',
-        browser: 'dist/browser',
         lib: 'lib',
         single: {
             dir: 'dist',
@@ -80,6 +86,15 @@ function buildTests () {
         .pipe(gulp.dest(testsDest));
 }
 
+function buildKarmaTests () {
+    var files = glob.sync(testCompiled),
+        b = browserify(files);
+
+    return b.bundle()
+        .pipe(source('main.js'))
+        .pipe(gulp.dest(testsDest));
+}
+
 gulp.task('build-dist', function () {
     return merge([
         buildCommonJs(true),
@@ -93,6 +108,18 @@ gulp.task('build-dev', function () {
         buildTests()
     ]);
 });
+gulp.task('test-karma', function () {
+    return buildKarmaTests()
+        .pipe(karma({
+            configFile: 'karma.js',
+            action: 'run'
+        }));
+});
+gulp.task('test-jasmine', function () {
+    return gulp.src(testCompiled)
+        .pipe(jasmine());
+});
+gulp.task('test-full', ['build-dist', 'test-karma', 'test-jasmine']);
 gulp.task('watch', function (done) {
    watch(src, function () {
        console.log('Building...');
@@ -105,3 +132,4 @@ gulp.task('watch', function (done) {
        console.log('Tests built');
    });
 });
+//TODO: prepare task for tests run by karma
