@@ -48,4 +48,10 @@ describe('Proxy', () => {
         expect(objProxy.has).toEqual('Psa');
         expect(obj.has).toEqual('Psa');
     });
+    it('should treat method call as object modifiaction', () => {
+        throw new Error('not implemented');
+    });
+    it('should not treat method call as object modification when EntityConfig mark given method as constant', () => {
+       throw new Error('not implemented'); 
+    });
 });
