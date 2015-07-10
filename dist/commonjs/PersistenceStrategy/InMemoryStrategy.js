@@ -7,7 +7,7 @@ var InMemoryStrategy = (function () {
     }
     InMemoryStrategy.prototype.create = function (info, obj) {
         var _this = this;
-        return new es6_promise_1.Promise(function (resolve, reject) {
+        return new es6_promise_1.Promise(function (resolve) {
             _this.getCollection(info).push(info.mapper.toObject(obj));
             resolve();
         });
@@ -51,10 +51,16 @@ var InMemoryStrategy = (function () {
             }
             return true;
         }
-        return new es6_promise_1.Promise(function (resolve, reject) {
+        var keyFilter = function (obj) {
+            return _this.matchesKey(info, criteria, obj);
+        };
+        return new es6_promise_1.Promise(function (resolve) {
             var collection = _this.getCollection(info), filter;
             if (criteria == null) {
                 filter = allFilter;
+            }
+            else if (criteria instanceof info.entity) {
+                filter = keyFilter;
             }
             else {
                 filter = strictFilter;

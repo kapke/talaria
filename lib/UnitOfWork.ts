@@ -69,15 +69,17 @@ class UnitOfWork {
         });
     }
 
-    public rollback () {}
+    public rollback () {
+        throw new Error('Not implemented');
+    }
 
     private getProxy (info:EntityInfo<any>, obj):Proxy {
         var setters = {};
 
-        function modificationHandler (info:EntityInfo<any>, target, name, value) {
+        var modificationHandler = (info:EntityInfo<any>, target, name, value) => {
             this.registerDirty(info, target);
             target[name] = value;
-        }
+        };
 
         for(var name in obj) {
             setters[name] = {set: modificationHandler.bind(this, info, obj, name)};

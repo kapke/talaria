@@ -8,6 +8,14 @@ class Person {
         this.name = name;
         this.surname = surname;
     }
+
+    greet () : String {
+        return this.name + this.surname;
+    }
+
+    beSmith () {
+        this.surname = 'Smith';
+    }
 }
 
 export default Person;

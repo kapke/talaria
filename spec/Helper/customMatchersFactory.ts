@@ -3,7 +3,8 @@
 
 function doesLookSame(actual, expected) {
     for(var name in expected) {
-        if(actual[name] != expected[name]) {
+        if((typeof expected[name] == 'function' && typeof actual[name] != 'function') ||
+            (actual[name] != expected[name])) {
             return false;
         }
     }

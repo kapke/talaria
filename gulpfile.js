@@ -115,7 +115,7 @@ gulp.task('test-karma', function () {
             action: 'run'
         }));
 });
-gulp.task('test-jasmine', function () {
+gulp.task('test-jasmine', ['build-dev'], function () {
     return gulp.src(testCompiled)
         .pipe(jasmine());
 });
