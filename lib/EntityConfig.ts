@@ -1,9 +1,9 @@
 class EntityConfig {
     public name:string;
-    public properties : Array<string>;
-    public key : Array<string>;
+    public properties : string[];
+    public key : string[];
 
-    public constructor (name:string, properties : Array<string>, key:Array<string> = []) {
+    public constructor (name:string, properties:string[], key:string[] = []) {
         this.name = name;
         this.properties = properties;
         this.key = key;

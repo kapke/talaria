@@ -71,4 +71,29 @@ describe('Unit of Work', () => {
         fetched.name = 'Basia';
         unit.commit();
     });
+    it('should treat method call as object modifiaction when method changes one of fields listed in EntityConfig', (done) => {
+        spyOn(strategy, 'update').and.callFake((info:EntityInfo, registeredObj) => {
+            for(var name in obj) {
+                expect(registeredObj[name]).toEqual(obj[name]);
+            }
+            done();
+        });
+        var fetched = <Person>unit.registerFetched(info, obj);
+        for(var name in obj) {
+            expect(fetched[name]).toEqual(obj[name]);
+        }
+        fetched.beSmith();
+        unit.commit();
+        expect(strategy.update).toHaveBeenCalled();
+    });
+    it('should not treat method call as object modification when method doesn\'t change fields listed in EntityConfig', () => {
+        spyOn(strategy, 'update');
+        var fetched = <Person>unit.registerFetched(info, obj);
+        for(var name in obj) {
+            expect(fetched[name]).toEqual(obj[name]);
+        }
+        fetched.greet();
+        unit.commit();
+        expect(strategy.update).not.toHaveBeenCalled();
+    });
 });

@@ -11,7 +11,7 @@ export default class InMemoryStrategy implements PersistenceStrategy {
     public constructor () {}
 
     public create<T> (info:EntityInfo<T>, obj:T):Promise<void> {
-        return new Promise<void>((resolve, reject) => {
+        return new Promise<void>((resolve) => {
             this.getCollection(info).push(info.mapper.toObject(obj));
             resolve();
         });
@@ -55,12 +55,18 @@ export default class InMemoryStrategy implements PersistenceStrategy {
             }
             return true;
         }
+        var keyFilter = (obj:Object) : boolean => {
+            return this.matchesKey(info, criteria, obj);
+        };
 
-        return new Promise<Array<T>>((resolve, reject) => {
+        return new Promise<Array<T>>((resolve) => {
             var collection = this.getCollection(info),
                 filter : (any) => boolean;
+
             if(criteria == null) {
                 filter = allFilter;
+            } else if (criteria instanceof info.entity) {
+                filter = keyFilter;
             } else {
                 filter = strictFilter;
             }
@@ -82,7 +88,7 @@ export default class InMemoryStrategy implements PersistenceStrategy {
         });
     }
 
-    private matchesKey<T> (info:EntityInfo<T>, ref, current) : Boolean {
+    private matchesKey<T> (info:EntityInfo<T>, ref, current) : boolean {
         for(var i=0; i<info.config.key.length; i++) {
             var name = info.config.key[i];
             if(ref[name] != current[name]) {

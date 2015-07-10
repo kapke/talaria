@@ -62,13 +62,16 @@ var UnitOfWork = (function () {
             strategy.delete(obj.Info, obj.Object);
         });
     };
-    UnitOfWork.prototype.rollback = function () { };
+    UnitOfWork.prototype.rollback = function () {
+        throw new Error('Not implemented');
+    };
     UnitOfWork.prototype.getProxy = function (info, obj) {
+        var _this = this;
         var setters = {};
-        function modificationHandler(info, target, name, value) {
-            this.registerDirty(info, target);
+        var modificationHandler = function (info, target, name, value) {
+            _this.registerDirty(info, target);
             target[name] = value;
-        }
+        };
         for (var name in obj) {
             setters[name] = { set: modificationHandler.bind(this, info, obj, name) };
         }
