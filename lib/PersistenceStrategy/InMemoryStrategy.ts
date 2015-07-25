@@ -70,9 +70,10 @@ export default class InMemoryStrategy implements PersistenceStrategy {
             } else {
                 filter = strictFilter;
             }
-            resolve(collection
-                .filter(filter)
-                .map(info.mapper.fromObject));
+            resolve(
+                collection
+                    .filter(filter)
+                    .map(info.mapper.fromObject));
         });
     }
 

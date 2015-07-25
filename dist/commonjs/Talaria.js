@@ -9,12 +9,14 @@ exports.Proxy = Proxy_1.default;
 var UnitOfWork_1 = require('./UnitOfWork');
 exports.UnitOfWork = UnitOfWork_1.default;
 var InMemoryStrategy_1 = require('./PersistenceStrategy/InMemoryStrategy');
+var EntityRegistry_1 = require('./EntityRegistry');
+var MapperContainer_1 = require('./MapperContainer');
 var Talaria = (function () {
     function Talaria() {
         this.defaultStrategy = new InMemoryStrategy_1.default();
         this.unitOfWork = new UnitOfWork_1.default(this.defaultStrategy);
-        this.entities = {};
         this.repositories = {};
+        this.registry = new EntityRegistry_1.default(new MapperContainer_1.default());
     }
     Talaria.getInstance = function () {
         if (!Talaria.instance) {
@@ -28,7 +30,7 @@ var Talaria = (function () {
         },
         /*
             Probably this should be removed and setting default strategy
-            should be done in constructor
+            should be done using constructor
          */
         set: function (value) {
             this.defaultStrategy = value;
@@ -44,11 +46,11 @@ var Talaria = (function () {
         enumerable: true,
         configurable: true
     });
-    Talaria.prototype.registerEntity = function (constructor, config, mapper) {
-        this.entities[config.name] = new EntityInfo_1.default(constructor, config, mapper);
+    Talaria.prototype.registerEntity = function (constructor, config, mapperKlass) {
+        this.registry.registerEntity(constructor, config, mapperKlass);
     };
     Talaria.prototype.getEntityInfo = function (name) {
-        return this.entities[name];
+        return this.registry.getEntity(name);
     };
     Talaria.prototype.getRepository = function (name) {
         if (!this.repositories[name]) {

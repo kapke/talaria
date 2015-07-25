@@ -7,12 +7,12 @@ import EntityConfig from '../lib/EntityConfig';
 import Repository from '../lib/Repository';
 import Proxy from '../lib/Proxy';
 import UnitOfWork from '../lib/UnitOfWork';
-import ps from '../lib/PersistenceStrategy';
-import PersistenceStrategy = ps.PersistenceStrategy;
+import {PersistenceStrategy} from '../lib/PersistenceStrategy';
 import InMemoryStrategy from '../lib/PersistenceStrategy/InMemoryStrategy';
 
 import Person from './Helper/Person';
 import personInfoFactory from './Helper/personInfoFactory';
+import PersonMapper from './Helper/PersonMapper';
 
 describe('Talaria\'s facade', () => {
     var entityInfo : EntityInfo,
@@ -28,7 +28,7 @@ describe('Talaria\'s facade', () => {
     });
 
     it('should successfully register entity under given name', () => {
-        talaria.registerEntity(entityInfo.entity, entityInfo.config);
+        talaria.registerEntity(entityInfo.entity, entityInfo.config, PersonMapper);
         var registeredEntity : EntityInfo = talaria.getEntityInfo(entityInfo.config.name);
         expect(registeredEntity.config).toBe(entityInfo.config);
         expect(registeredEntity.entity).toBe(entityInfo.entity);
@@ -37,7 +37,7 @@ describe('Talaria\'s facade', () => {
     it('should create and return proper repository after registering entity', () => {
         var entityConfig : EntityConfig = entityInfo.config,
             entity = entityInfo.entity;
-        talaria.registerEntity(entity, entityConfig);
+        talaria.registerEntity(entity, entityConfig, PersonMapper);
         var repository : Repository<Person> = talaria.getRepository<Person>(entityConfig.name);
         expect(repository).toBeDefined();
         expect(repository).toEqual(jasmine.any(Repository));

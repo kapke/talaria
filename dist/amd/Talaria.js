@@ -1,4 +1,4 @@
-define(["require", "exports", './EntityConfig', './EntityInfo', './Repository', './Proxy', './UnitOfWork', './PersistenceStrategy/InMemoryStrategy'], function (require, exports, EntityConfig_1, EntityInfo_1, Repository_1, Proxy_1, UnitOfWork_1, InMemoryStrategy_1) {
+define(["require", "exports", './EntityConfig', './EntityInfo', './Repository', './Proxy', './UnitOfWork', './PersistenceStrategy/InMemoryStrategy', './EntityRegistry', './MapperContainer'], function (require, exports, EntityConfig_1, EntityInfo_1, Repository_1, Proxy_1, UnitOfWork_1, InMemoryStrategy_1, EntityRegistry_1, MapperContainer_1) {
     exports.EntityConfig = EntityConfig_1.default;
     exports.EntityInfo = EntityInfo_1.default;
     exports.Repository = Repository_1.default;
@@ -8,8 +8,8 @@ define(["require", "exports", './EntityConfig', './EntityInfo', './Repository', 
         function Talaria() {
             this.defaultStrategy = new InMemoryStrategy_1.default();
             this.unitOfWork = new UnitOfWork_1.default(this.defaultStrategy);
-            this.entities = {};
             this.repositories = {};
+            this.registry = new EntityRegistry_1.default(new MapperContainer_1.default());
         }
         Talaria.getInstance = function () {
             if (!Talaria.instance) {
@@ -23,7 +23,7 @@ define(["require", "exports", './EntityConfig', './EntityInfo', './Repository', 
             },
             /*
                 Probably this should be removed and setting default strategy
-                should be done in constructor
+                should be done using constructor
              */
             set: function (value) {
                 this.defaultStrategy = value;
@@ -39,11 +39,11 @@ define(["require", "exports", './EntityConfig', './EntityInfo', './Repository', 
             enumerable: true,
             configurable: true
         });
-        Talaria.prototype.registerEntity = function (constructor, config, mapper) {
-            this.entities[config.name] = new EntityInfo_1.default(constructor, config, mapper);
+        Talaria.prototype.registerEntity = function (constructor, config, mapperKlass) {
+            this.registry.registerEntity(constructor, config, mapperKlass);
         };
         Talaria.prototype.getEntityInfo = function (name) {
-            return this.entities[name];
+            return this.registry.getEntity(name);
         };
         Talaria.prototype.getRepository = function (name) {
             if (!this.repositories[name]) {

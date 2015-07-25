@@ -95,31 +95,31 @@ function buildKarmaTests () {
         .pipe(gulp.dest(testsDest));
 }
 
-gulp.task('build-dist', function () {
+gulp.task('build:dist', function () {
     return merge([
         buildCommonJs(true),
         buildDefinitions(),
         buildAmd()
     ]);
 });
-gulp.task('build-dev', function () {
+gulp.task('build:dev', function () {
     return merge([
         buildCommonJs(),
         buildTests()
     ]);
 });
-gulp.task('test-karma', function () {
+gulp.task('test:karma', function () {
     return buildKarmaTests()
         .pipe(karma({
             configFile: 'karma.js',
             action: 'run'
         }));
 });
-gulp.task('test-jasmine', ['build-dev'], function () {
+gulp.task('test:jasmine', ['build:dev'], function () {
     return gulp.src(testCompiled)
         .pipe(jasmine());
 });
-gulp.task('test-full', ['build-dist', 'test-karma', 'test-jasmine']);
+gulp.task('test:full', ['build:dist', 'test:karma', 'test:jasmine']);
 gulp.task('watch', function (done) {
    watch(src, function () {
        console.log('Building...');
@@ -132,4 +132,4 @@ gulp.task('watch', function (done) {
        console.log('Tests built');
    });
 });
-//TODO: prepare task for tests run by karma
+//TODO: prepare notifications after time-consuming tasks using gulp-notify

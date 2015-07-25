@@ -6,6 +6,8 @@ import UnitOfWork from './UnitOfWork';
 import {PersistenceStrategy} from './PersistenceStrategy';
 import InMemoryStrategy from './PersistenceStrategy/InMemoryStrategy';
 import {Mapper} from './Mapper';
+import EntityRegistry from './EntityRegistry';
+import MapperContainer from './MapperContainer';
 
 export default class Talaria {
     private static instance : Talaria;
@@ -19,8 +21,8 @@ export default class Talaria {
 
     private defaultStrategy : PersistenceStrategy = new InMemoryStrategy();
     private unitOfWork : UnitOfWork = new UnitOfWork(this.defaultStrategy);
-    private entities : {[name:string]:EntityInfo<any>} = {};
     private repositories : {[name:string]:Repository<any>} = {};
+    private registry : EntityRegistry = new EntityRegistry(new MapperContainer());
 
     get DefaultStrategy():PersistenceStrategy {
         return this.defaultStrategy;
@@ -28,7 +30,7 @@ export default class Talaria {
 
     /*
         Probably this should be removed and setting default strategy
-        should be done in constructor
+        should be done using constructor
      */
     set DefaultStrategy(value:PersistenceStrategy) {
         this.defaultStrategy = value;
@@ -39,12 +41,12 @@ export default class Talaria {
         return this.unitOfWork;
     }
 
-    public registerEntity<T> (constructor:any, config:EntityConfig, mapper:Mapper<T>) {
-        this.entities[config.name] = new EntityInfo<T>(constructor, config, mapper);
+    public registerEntity<T> (constructor:Function, config:EntityConfig, mapperKlass:{getInstance:Function}) {
+        this.registry.registerEntity(constructor, config, mapperKlass);
     }
 
     public getEntityInfo (name:string) : EntityInfo<any> {
-        return this.entities[name];
+        return this.registry.getEntity(name);
     }
 
     public getRepository<T> (name:string) : Repository<T> {
