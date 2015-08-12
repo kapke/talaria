@@ -8,16 +8,16 @@ import Person from './Helper/Person';
 import personInfoFactory from './Helper/personInfoFactory';
 
 class FakeStrategy implements PersistenceStrategy {
-    public create(info:EntityInfo, obj:any):Promise<void> {
+    public create(info:EntityInfo<any>, obj:any):Promise<void> {
         throw new Error("Not implemented");
     }
-    public update(info:EntityInfo, obj:any):Promise<void> {
+    public update(info:EntityInfo<any>, obj:any):Promise<void> {
         throw new Error("Not implemented");
     }
-    public delete(info:EntityInfo, obj:any):Promise<void> {
+    public delete(info:EntityInfo<any>, obj:any):Promise<void> {
         throw new Error("Not implemented");
     }
-    public find(info:EntityInfo, criteria:Object):Promise<any[]> {
+    public find(info:EntityInfo<any>, criteria:Object):Promise<any[]> {
         throw new Error("Not implemented");
     }
 }
@@ -26,7 +26,7 @@ describe('Unit of Work', () => {
     var unit : UnitOfWork,
         obj:Person,
         strategy:PersistenceStrategy,
-        info:EntityInfo;
+        info:EntityInfo<any>;
     beforeEach(() => {
         strategy = new FakeStrategy();
         unit = new UnitOfWork(strategy);
@@ -34,7 +34,7 @@ describe('Unit of Work', () => {
         info = personInfoFactory.getPersonInfo();
     });
     it('should persist new object after commit using given strategy when registering object as new', (done) => {
-        spyOn(strategy, 'create').and.callFake((info:EntityInfo, registeredObj) => {
+        spyOn(strategy, 'create').and.callFake((info:EntityInfo<any>, registeredObj) => {
             expect(registeredObj).toEqual(obj);
             done();
         });
@@ -42,7 +42,7 @@ describe('Unit of Work', () => {
         unit.commit();
     });
     it('should update previously persisted object after commit using given strategy when registering object as dirty', (done) => {
-        spyOn(strategy, 'update').and.callFake((info:EntityInfo, registeredObj) => {
+        spyOn(strategy, 'update').and.callFake((info:EntityInfo<any>, registeredObj) => {
             expect(registeredObj).toEqual(obj);
             done();
         });
@@ -50,7 +50,7 @@ describe('Unit of Work', () => {
         unit.commit();
     });
     it('should delete persisted object after marking it as deleted using given strategy', (done) => {
-        spyOn(strategy, 'delete').and.callFake((info:EntityInfo, deletedObj) => {
+        spyOn(strategy, 'delete').and.callFake((info:EntityInfo<any>, deletedObj) => {
             expect(deletedObj).toEqual(obj);
             done();
         });
@@ -58,7 +58,7 @@ describe('Unit of Work', () => {
         unit.commit();
     });
     it('should detect fetched object change and register it as dirty automatically', (done) => {
-        spyOn(strategy, 'update').and.callFake((info:EntityInfo, registeredObj) => {
+        spyOn(strategy, 'update').and.callFake((info:EntityInfo<any>, registeredObj) => {
             for(var name in obj) {
                 expect(registeredObj[name]).toEqual(obj[name]);
             }
@@ -72,7 +72,7 @@ describe('Unit of Work', () => {
         unit.commit();
     });
     it('should treat method call as object modifiaction when method changes one of fields listed in EntityConfig', (done) => {
-        spyOn(strategy, 'update').and.callFake((info:EntityInfo, registeredObj) => {
+        spyOn(strategy, 'update').and.callFake((info:EntityInfo<any>, registeredObj) => {
             for(var name in obj) {
                 expect(registeredObj[name]).toEqual(obj[name]);
             }

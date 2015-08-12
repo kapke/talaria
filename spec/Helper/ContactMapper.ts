@@ -1,4 +1,4 @@
-import Mapper from '../../lib/Mapper';
+import {Mapper} from '../../lib/Mapper';
 import Contact from './Contact';
 import PersonMapper from './PersonMapper';
 

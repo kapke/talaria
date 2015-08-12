@@ -15,7 +15,7 @@ import personInfoFactory from './Helper/personInfoFactory';
 import PersonMapper from './Helper/PersonMapper';
 
 describe('Talaria\'s facade', () => {
-    var entityInfo : EntityInfo,
+    var entityInfo : EntityInfo<any>,
         talaria : Talaria;
 
     beforeEach(() => {
@@ -29,7 +29,7 @@ describe('Talaria\'s facade', () => {
 
     it('should successfully register entity under given name', () => {
         talaria.registerEntity(entityInfo.entity, entityInfo.config, PersonMapper);
-        var registeredEntity : EntityInfo = talaria.getEntityInfo(entityInfo.config.name);
+        var registeredEntity : EntityInfo<Person> = talaria.getEntityInfo(entityInfo.config.name);
         expect(registeredEntity.config).toBe(entityInfo.config);
         expect(registeredEntity.entity).toBe(entityInfo.entity);
     });
