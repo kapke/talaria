@@ -1,5 +1,6 @@
 import {Mapper} from '../../lib/Mapper';
 import Person from './Person';
+import {PersistenceStrategy} from '../../lib/PersistenceStrategy';
 
 export default class PersonMapper implements Mapper<Person> {
     public static getInstance () {
@@ -13,8 +14,21 @@ export default class PersonMapper implements Mapper<Person> {
             surname: person.surname
         }
     }
+
     fromObject(data):Person {
         return new Person(data.name, data.surname, data.id);
+    }
+
+    toObjectWithPointers (strategy:PersistenceStrategy, entity:Person):Promise<Object> {
+         return new Promise((resolve, reject) => {
+             resolve(this.toObject(entity));
+         });
+    }
+
+    fromObjectWithPointers (strategy:PersistenceStrategy, dataWithPointers:Object):Promise<Person> {
+        return new Promise((resolve, reject) => {
+            resolve(this.fromObject(dataWithPointers));
+        });
     }
 
     extractKey(entity:Person):Object {

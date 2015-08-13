@@ -1,6 +1,7 @@
 import {Mapper} from '../../lib/Mapper';
 import Contact from './Contact';
 import PersonMapper from './PersonMapper';
+import {PersistenceStrategy} from '../../lib/PersistenceStrategy';
 
 class ContactMapper implements Mapper<Contact> {
     private personMapper:PersonMapper;
@@ -13,15 +14,25 @@ class ContactMapper implements Mapper<Contact> {
         this.personMapper = personMapper;
     }
 
-    toObject(entity:Contact):{person: Object, data:{string: any}} {
+    toObject(entity:Contact):{person: Object, data:Object} {
         return {
             person: this.personMapper.toObject(entity.person),
             data: entity.data
         };
     }
 
-    fromObject(data:{person: Object, data:{string:any}}):Contact {
+
+    toObjectWithPointers (strategy:PersistenceStrategy, entity:Contact):Promise<Object> {
+        throw new Error('Not implemented');
+    }
+
+    fromObject(data:{person: Object, data:Object}):Contact {
         return new Contact(this.personMapper.fromObject(data.person), data.data);
+    }
+
+
+    fromObjectWithPointers (strategy:PersistenceStrategy, dataWithPointers:Object):Promise<Contact> {
+        throw new Error('Not implemented');
     }
 
     extractKey(entity:Contact):{person: number} {

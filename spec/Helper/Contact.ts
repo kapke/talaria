@@ -2,9 +2,9 @@ import Person from './Person';
 
 class Contact {
     public person:Person;
-    public data:{string: any};
+    public data:Object;
 
-    constructor(person:Person, data:{string: any}) {
+    constructor(person:Person, data:Object) {
         this.person = person;
         this.data = data;
     }
