@@ -256,6 +256,7 @@ declare module jasmine {
 
         toContainLookingSame(expected: any):boolean;
         toLookSame(expected:any):boolean;
+        toThrowTalariaError(expected: any):boolean;
     }
 
     interface Reporter {

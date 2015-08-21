@@ -4,6 +4,8 @@ import Contact from '../Helper/Contact';
 import ContactMapper from '../Helper/ContactMapper';
 import PersonMapper from '../Helper/PersonMapper';
 import personMapperSpecConfig from './personMapperSpecConfig';
+import Pointer from '../../lib/Pointer';
+import contactInfoFactory from '../Helper/contactInfoFactory';
 
 var contactMapperSpecConfig:MapperSpecConfig<Contact> = {
     name: 'ContactMapper',
@@ -11,10 +13,10 @@ var contactMapperSpecConfig:MapperSpecConfig<Contact> = {
         return ContactMapper;
     },
     getInstanceArgs: ():Array<Mapper<any>> => {
-        return [new PersonMapper()];
+        return contactInfoFactory.getContactMapperArgs();
     },
     mapper: ():ContactMapper => {
-        return new ContactMapper(new PersonMapper());
+        return contactInfoFactory.getContactMapper();
     },
     entity: ():Contact => {
         return new Contact(personMapperSpecConfig.entity(), {name: 'Alusia'});
@@ -47,6 +49,16 @@ var contactMapperSpecConfig:MapperSpecConfig<Contact> = {
         return {
             person: 1
         }
+    },
+    pointer: ():Pointer => {
+        return new Pointer('Contact', {
+            person: 1
+        });
+    },
+    entityWithoutId: function():Contact {
+        var entity:Contact = this.entity();
+        entity.person = null;
+        return entity;
     }
 };
 

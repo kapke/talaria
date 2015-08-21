@@ -34,7 +34,7 @@ class MapperContainer {
         if(this.registeredMappers[name]) {
             return this.registeredMappers[name];
         } else {
-            throw MapperNotAvailableError(name);
+            throw new MapperNotAvailableError(name);
         }
     }
 

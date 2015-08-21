@@ -35,7 +35,7 @@ describe('MapperContainer', () => {
 
     it('should create mappers when all dependencies are resolved injecting dependencies as constructor arguments', () => {
         mapperContainer.registerMapper(contactInfo.config.name, contactInfo.config.dependencies, ContactMapper);
-        expect(mapperContainer.getMapper.bind(mapperContainer, contactInfo.config.name)).toThrow(MapperNotAvailableError(contactInfo.config.name));
+        expect(mapperContainer.getMapper.bind(mapperContainer, contactInfo.config.name)).toThrow(new MapperNotAvailableError(contactInfo.config.name));
         mapperContainer.registerMapper(personInfo.config.name, personInfo.config.dependencies, PersonMapper);
         expect(mapperContainer.getMapper(contactInfo.config.name)).toEqual(jasmine.any(ContactMapper));
     });

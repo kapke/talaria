@@ -8,6 +8,9 @@ import ContactMapper from './Helper/ContactMapper';
 import {Mapper} from '../lib/Mapper';
 import {PersistenceStrategy} from '../lib/PersistenceStrategy';
 import InMemoryStrategy from '../lib/PersistenceStrategy/InMemoryStrategy';
+import Pointer from '../lib/Pointer';
+import EntityNotDistinguishableError from '../lib/Error/EntityNotDistinguishableError';
+import customMatchersFactory from './Helper/customMatchersFactory';
 
 export interface MapperSpecConfig<T> {
     name:string;
@@ -19,6 +22,8 @@ export interface MapperSpecConfig<T> {
     dataWithPointers:()=>any;
     key:()=>any;
     entityMatcher:(actual:T, expected:T)=>boolean;
+    pointer:()=>Pointer;
+    entityWithoutId:()=>T;
 }
 
 function mapperSpec<T> (config:MapperSpecConfig<T>):void {
@@ -30,7 +35,9 @@ function mapperSpec<T> (config:MapperSpecConfig<T>):void {
             data:any,
             dataWithPointers:any,
             key:any;
+
         beforeEach(() => {
+            jasmine.addMatchers(customMatchersFactory);
             mapperConstructor = config.mapperConstructor();
             mapper = config.mapper();
             entity = config.entity();
@@ -56,6 +63,12 @@ function mapperSpec<T> (config:MapperSpecConfig<T>):void {
             expect(mapper.extractKey(entity)).toEqual(key);
         });
 
+        it('should throw error when it\'s impossible to extract key from entity', () => {
+            expect(() => {
+                mapper.extractKey(config.entityWithoutId())
+            }).toThrowTalariaError(EntityNotDistinguishableError);
+        });
+
         it('should convert entity into object with pointers', (done) => {
             mapper.toObjectWithPointers(persistenceStrategy, entity).then(function (data) {
                 expect(data).toEqual(dataWithPointers);
@@ -67,6 +80,16 @@ function mapperSpec<T> (config:MapperSpecConfig<T>):void {
             mapper.fromObjectWithPointers(persistenceStrategy, dataWithPointers).then(function (entity) {
                 expect(config.entityMatcher(entity, config.entity())).toBe(true);
             })
+        });
+
+        it('should convert object into pointer', () => {
+            expect(mapper.toPointer(entity)).toEqual(config.pointer());
+        });
+
+        it('should throw error when object has not all required data for creating pointer', () => {
+            expect(() => {
+                mapper.toPointer(config.entityWithoutId())
+            }).toThrowTalariaError(EntityNotDistinguishableError);
         });
     });
 }

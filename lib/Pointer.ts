@@ -1,4 +1,4 @@
-class Pointer {
+export default class Pointer {
     private name:string;
     private key:Object;
 
@@ -31,4 +31,3 @@ class Pointer {
         return new Pointer(name, key);
     }
 }
-export default Pointer;

@@ -11,4 +11,6 @@ export default class EntityInfo<T> {
         this.config = config;
         this.mapper = mapper;
     }
+
+    //TODO: add EntityInfo of dependencies as here to make persistence strategy able to persist dependencies properly
 }

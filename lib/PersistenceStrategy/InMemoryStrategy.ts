@@ -3,7 +3,7 @@
 
 import {PersistenceStrategy} from '../PersistenceStrategy';
 import EntityInfo from '../EntityInfo';
-import {Promise} from 'es6-promise';
+import Pointer from '../Pointer';
 
 export default class InMemoryStrategy implements PersistenceStrategy {
     private objects:{[name:string]:Array<any>} = {};
@@ -56,8 +56,21 @@ export default class InMemoryStrategy implements PersistenceStrategy {
             return true;
         }
         var keyFilter = (obj:Object) : boolean => {
-            return this.matchesKey(info, criteria, obj);
-        };
+                return this.matchesKey(info, criteria, obj);
+            },
+            pointerFilterFactory = (criteria:Pointer):(any: any)=>boolean => {
+                function extractKeyFromPointerCriteria (criteria:Pointer) {
+                    var copy:{__entity:any; __type:any} = {__entity: undefined, __type: undefined},
+                        converted = criteria.toObject();
+                    for (let name in converted) {
+                        copy[name] = converted[name];
+                    }
+                    delete copy.__entity;
+                    delete copy.__type;
+                    return copy;
+                }
+                return this.matchesKey.bind(this, info, extractKeyFromPointerCriteria(criteria));
+            };
 
         return new Promise<Array<T>>((resolve) => {
             var collection = this.getCollection(info),
@@ -67,6 +80,8 @@ export default class InMemoryStrategy implements PersistenceStrategy {
                 filter = allFilter;
             } else if (criteria instanceof info.entity) {
                 filter = keyFilter;
+            } else if (criteria instanceof Pointer) {
+                filter = pointerFilterFactory(criteria);
             } else {
                 filter = strictFilter;
             }

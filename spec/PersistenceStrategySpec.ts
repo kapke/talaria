@@ -6,6 +6,7 @@ import EntityInfo from '../lib/EntityInfo';
 import Person from './Helper/Person';
 import personInfoFactory from './Helper/personInfoFactory';
 import customMatchersFactory from './Helper/customMatchersFactory';
+import Pointer from '../lib/Pointer';
 
 export default function strategySpec (strategyName : String, strategyFactory : () => PersistenceStrategy) : void {
     describe(strategyName + ' Persistence Strategy', () => {
@@ -45,10 +46,18 @@ export default function strategySpec (strategyName : String, strategyFactory : (
             });
         });
         it('should find all stored objects when passing null as criteria', (done) => {
-           strategy.find(info, null).then((received) => {
+            strategy.find(info, null).then((received) => {
                 expect(received).toEqual([obj]);
                 done();
            });
+        });
+        it('should find object using pointer to it', (done) => {
+            strategy.find(info, new Pointer(info.config.name, {
+                id: 1
+            })).then((received) => {
+                expect(received).toEqual([obj]);
+                done();
+            });
         });
         it('should use given mapper for transforming data into entity', (done) => {
             spyOn(info.mapper, 'fromObject');

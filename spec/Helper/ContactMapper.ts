@@ -2,15 +2,20 @@ import {Mapper} from '../../lib/Mapper';
 import Contact from './Contact';
 import PersonMapper from './PersonMapper';
 import {PersistenceStrategy} from '../../lib/PersistenceStrategy';
+import Pointer from '../../lib/Pointer';
+import EntityConfig from '../../lib/EntityConfig';
+import EntityNotDistinguishableError from '../../lib/Error/EntityNotDistinguishableError';
 
 class ContactMapper implements Mapper<Contact> {
+    private contactConfig:EntityConfig;
     private personMapper:PersonMapper;
 
-    public static getInstance(personMapper:PersonMapper) {
-        return new ContactMapper(personMapper);
+    public static getInstance(contactConfig:EntityConfig, personMapper:PersonMapper) {
+        return new ContactMapper(contactConfig, personMapper);
     }
 
-    constructor (personMapper:PersonMapper) {
+    constructor (contactConfig:EntityConfig, personMapper:PersonMapper) {
+        this.contactConfig = contactConfig;
         this.personMapper = personMapper;
     }
 
@@ -21,6 +26,9 @@ class ContactMapper implements Mapper<Contact> {
         };
     }
 
+    toPointer (entity:Contact):Pointer {
+        return new Pointer(this.contactConfig.name, this.extractKey(entity));
+    }
 
     toObjectWithPointers (strategy:PersistenceStrategy, entity:Contact):Promise<Object> {
         throw new Error('Not implemented');
@@ -30,12 +38,14 @@ class ContactMapper implements Mapper<Contact> {
         return new Contact(this.personMapper.fromObject(data.person), data.data);
     }
 
-
     fromObjectWithPointers (strategy:PersistenceStrategy, dataWithPointers:Object):Promise<Contact> {
         throw new Error('Not implemented');
     }
 
     extractKey(entity:Contact):{person: number} {
+        if(!entity.person) {
+            throw new EntityNotDistinguishableError(entity);
+        }
         return {
             person: entity.person.id
         };

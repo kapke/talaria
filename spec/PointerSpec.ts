@@ -15,7 +15,7 @@ describe('Pointer', () => {
         pointerObject:{__type:string, __entity:string, id:number};
 
     beforeEach(() => {
-        personMapper = new PersonMapper();
+        personMapper = personInfoFactory.getPersonMapper();
         person = new Person('Ala', 'Makota', 1);
         personInfo = personInfoFactory.getPersonInfo();
         pointer = new Pointer(personInfo.config.name, personMapper.extractKey(person));
