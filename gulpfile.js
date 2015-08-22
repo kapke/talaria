@@ -117,7 +117,9 @@ gulp.task('test:karma', function () {
 });
 gulp.task('test:jasmine', ['build:dev'], function () {
     return gulp.src(testCompiled)
-        .pipe(jasmine());
+        .pipe(jasmine({
+            includeStackTrace: true
+        }));
 });
 gulp.task('test:full', ['build:dist', 'test:karma', 'test:jasmine']);
 gulp.task('watch', function (done) {
@@ -132,4 +134,3 @@ gulp.task('watch', function (done) {
        console.log('Tests built');
    });
 });
-//TODO: prepare notifications after time-consuming tasks using gulp-notify

@@ -2,6 +2,14 @@ export default class Pointer {
     private name:string;
     private key:Object;
 
+    get Name ():string {
+        return this.name;
+    }
+
+    get Key():Object {
+        return this.key;
+    }
+
     constructor(name:string, key:Object) {
         this.name = name;
         this.key = key;

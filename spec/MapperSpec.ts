@@ -23,6 +23,7 @@ export interface MapperSpecConfig<T> {
     key:()=>any;
     entityMatcher:(actual:T, expected:T)=>boolean;
     pointer:()=>Pointer;
+    pointerResolver:(pointer:Pointer)=>Promise<Object>;
     entityWithoutId:()=>T;
 }
 
@@ -69,15 +70,12 @@ function mapperSpec<T> (config:MapperSpecConfig<T>):void {
             }).toThrowTalariaError(EntityNotDistinguishableError);
         });
 
-        it('should convert entity into object with pointers', (done) => {
-            mapper.toObjectWithPointers(persistenceStrategy, entity).then(function (data) {
-                expect(data).toEqual(dataWithPointers);
-                done();
-            });
+        it('should convert entity into object with pointers', () => {
+            expect(mapper.toObjectWithPointers(entity)).toEqual(dataWithPointers);
         });
 
         it('should convert object with pointers into entity', () => {
-            mapper.fromObjectWithPointers(persistenceStrategy, dataWithPointers).then(function (entity) {
+            mapper.fromObjectWithPointers(config.pointerResolver, dataWithPointers).then(function (entity) {
                 expect(config.entityMatcher(entity, config.entity())).toBe(true);
             })
         });

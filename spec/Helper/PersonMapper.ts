@@ -8,7 +8,7 @@ import EntityNotDistinguishableError from '../../lib/Error/EntityNotDistinguisha
 export default class PersonMapper implements Mapper<Person> {
     private personConfig:EntityConfig;
 
-    public static getInstance (personConfig:EntityConfig):PersonMapper {
+    public static getInstance (personConfig:EntityConfig, ...mappers:Array<Mapper<any>>):PersonMapper {
         return new PersonMapper(personConfig);
     }
 
@@ -32,14 +32,12 @@ export default class PersonMapper implements Mapper<Person> {
         return new Person(data.name, data.surname, data.id);
     }
 
-    toObjectWithPointers (strategy:PersistenceStrategy, entity:Person):Promise<Object> {
-         return new Promise((resolve, reject) => {
-             resolve(this.toObject(entity));
-         });
+    toObjectWithPointers (entity:Person):Object {
+        return this.toObject(entity);
     }
 
-    fromObjectWithPointers (strategy:PersistenceStrategy, dataWithPointers:Object):Promise<Person> {
-        return new Promise((resolve, reject) => {
+    fromObjectWithPointers (pointerResolver:(pointer:Pointer)=>Promise<Object>, dataWithPointers:Object):Promise<Person> {
+        return new Promise<Person>((resolve, reject) => {
             resolve(this.fromObject(dataWithPointers));
         });
     }

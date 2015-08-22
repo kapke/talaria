@@ -48,7 +48,8 @@ var personMapperSpecConfig:MapperSpecConfig<Person> = {
         var entity:Person = this.entity();
         entity.id = null;
         return entity;
-    }
+    },
+    pointerResolver: (pointer:Pointer)=>{return new Promise<Object>(() => {});}
 };
 
 export default personMapperSpecConfig;

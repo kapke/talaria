@@ -5,9 +5,9 @@ import Proxy from './Proxy';
 import UnitOfWork from './UnitOfWork';
 import {PersistenceStrategy} from './PersistenceStrategy';
 import InMemoryStrategy from './PersistenceStrategy/InMemoryStrategy';
-import {Mapper} from './Mapper';
+import {Mapper, MapperConstructor} from './Mapper';
 import EntityRegistry from './EntityRegistry';
-import MapperContainer from './MapperContainer';
+import MapperContainer from './EntityContainer';
 
 export default class Talaria {
     private static instance : Talaria;
@@ -41,8 +41,8 @@ export default class Talaria {
         return this.unitOfWork;
     }
 
-    public registerEntity<T> (constructor:Function, config:EntityConfig, mapperKlass:{getInstance:Function}) {
-        this.registry.registerEntity(constructor, config, mapperKlass);
+    public registerEntity<T> (constructor:Function, config:EntityConfig, mapperConstructor:MapperConstructor) {
+        this.registry.registerEntity(constructor, config, mapperConstructor);
     }
 
     public getEntityInfo (name:string) : EntityInfo<any> {

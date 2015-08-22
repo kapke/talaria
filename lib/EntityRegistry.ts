@@ -1,46 +1,21 @@
 import EntityInfo from './EntityInfo';
 import EntityConfig from './EntityConfig';
-import MapperContainer from './MapperContainer';
-import {Mapper} from './Mapper';
+import EntityContainer from './EntityContainer';
+import {Mapper, MapperConstructor} from './Mapper';
 
 class EntityRegistry {
-    private mapperContainer:MapperContainer;
-    private registry:{[name:string]:{
-        resolved:boolean,
-        info:EntityInfo<any>|any,
-        data: {constructor: Function, config:EntityConfig, mapperKlass:{getInstance:Function}}}
-    };
+    private entityContainer:EntityContainer;
 
-    constructor (mapperContainer:MapperContainer) {
-        this.mapperContainer = mapperContainer;
-        this.registry = {};
+    constructor (entityContainer:EntityContainer) {
+        this.entityContainer = entityContainer;
     }
 
-    public registerEntity<T> (constructor:Function, config:EntityConfig, mapperKlass:{getInstance:Function}):void {
-        this.mapperContainer.registerMapper(config.name, config.dependencies, mapperKlass);
-        this.registry[config.name] = {
-            resolved: false,
-            info: null,
-            data: {
-                constructor: constructor,
-                config: config,
-                mapperKlass: mapperKlass
-            }
-        }
+    public registerEntity<T> (entityConstructor:Function, config:EntityConfig, mapperConstructor:MapperConstructor):void {
+        this.entityContainer.registerEntity(config, entityConstructor, mapperConstructor);
     }
 
     public getEntity (name:string):EntityInfo<any> {
-        var item = this.registry[name];
-        if(!item.resolved) {
-            this.tryResolve(name);
-        }
-        return item.info;
-    }
-
-    private tryResolve (name:string) {
-        var mapper:Mapper<any> = this.mapperContainer.getMapper(name),
-            item = this.registry[name];
-        item.info = new EntityInfo<any>(item.data.constructor, item.data.config, mapper);
+        return this.entityContainer.getEntity(name);
     }
 }
 

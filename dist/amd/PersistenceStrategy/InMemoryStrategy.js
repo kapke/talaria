@@ -1,20 +1,20 @@
 ///<reference path="../../typings/es6-promise/es6-promise.d.ts" />
 ///<reference path="../../typings/node/node.d.ts" />
-define(["require", "exports", 'es6-promise'], function (require, exports, es6_promise_1) {
+define(["require", "exports", '../Pointer'], function (require, exports, Pointer_1) {
     var InMemoryStrategy = (function () {
         function InMemoryStrategy() {
             this.objects = {};
         }
         InMemoryStrategy.prototype.create = function (info, obj) {
             var _this = this;
-            return new es6_promise_1.Promise(function (resolve) {
+            return new Promise(function (resolve) {
                 _this.getCollection(info).push(info.mapper.toObject(obj));
                 resolve();
             });
         };
         InMemoryStrategy.prototype.update = function (info, obj) {
             var _this = this;
-            return new es6_promise_1.Promise(function (resolve) {
+            return new Promise(function (resolve) {
                 _this.findByKey(info, info.mapper.toObject(obj)).then(function (found) {
                     for (var name in found) {
                         found[name] = obj[name];
@@ -27,7 +27,7 @@ define(["require", "exports", 'es6-promise'], function (require, exports, es6_pr
             var _this = this;
             var collection = this.getCollection(info);
             var resolved = false;
-            return new es6_promise_1.Promise(function (resolve, reject) {
+            return new Promise(function (resolve, reject) {
                 for (var i = 0; i < collection.length; i++) {
                     if (_this.matchesKey(info, obj, collection[i])) {
                         collection.splice(i, 1);
@@ -53,14 +53,28 @@ define(["require", "exports", 'es6-promise'], function (require, exports, es6_pr
             }
             var keyFilter = function (obj) {
                 return _this.matchesKey(info, criteria, obj);
+            }, pointerFilterFactory = function (criteria) {
+                function extractKeyFromPointerCriteria(criteria) {
+                    var copy = { __entity: undefined, __type: undefined }, converted = criteria.toObject();
+                    for (var name_1 in converted) {
+                        copy[name_1] = converted[name_1];
+                    }
+                    delete copy.__entity;
+                    delete copy.__type;
+                    return copy;
+                }
+                return _this.matchesKey.bind(_this, info, extractKeyFromPointerCriteria(criteria));
             };
-            return new es6_promise_1.Promise(function (resolve) {
+            return new Promise(function (resolve) {
                 var collection = _this.getCollection(info), filter;
                 if (criteria == null) {
                     filter = allFilter;
                 }
                 else if (criteria instanceof info.entity) {
                     filter = keyFilter;
+                }
+                else if (criteria instanceof Pointer_1.default) {
+                    filter = pointerFilterFactory(criteria);
                 }
                 else {
                     filter = strictFilter;
@@ -73,7 +87,7 @@ define(["require", "exports", 'es6-promise'], function (require, exports, es6_pr
         InMemoryStrategy.prototype.findByKey = function (info, keyValue) {
             var _this = this;
             var collection = this.getCollection(info);
-            return new es6_promise_1.Promise(function (resolve, reject) {
+            return new Promise(function (resolve, reject) {
                 for (var i = 0; i < collection.length; i++) {
                     if (_this.matchesKey(info, keyValue, collection[i])) {
                         resolve(collection[i]);

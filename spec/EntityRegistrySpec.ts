@@ -3,7 +3,7 @@
 
 import EntityRegistry from '../lib/EntityRegistry';
 import EntityInfo from '../lib/EntityInfo';
-import MapperContainer from '../lib/MapperContainer';
+import MapperContainer from '../lib/EntityContainer';
 import personInfoFactory from './Helper/personInfoFactory';
 import Person from './Helper/Person';
 import PersonMapper from './Helper/PersonMapper';

@@ -1,4 +1,4 @@
-define(["require", "exports", './EntityConfig', './EntityInfo', './Repository', './Proxy', './UnitOfWork', './PersistenceStrategy/InMemoryStrategy', './EntityRegistry', './MapperContainer'], function (require, exports, EntityConfig_1, EntityInfo_1, Repository_1, Proxy_1, UnitOfWork_1, InMemoryStrategy_1, EntityRegistry_1, MapperContainer_1) {
+define(["require", "exports", './EntityConfig', './EntityInfo', './Repository', './Proxy', './UnitOfWork', './PersistenceStrategy/InMemoryStrategy', './EntityRegistry', './EntityContainer'], function (require, exports, EntityConfig_1, EntityInfo_1, Repository_1, Proxy_1, UnitOfWork_1, InMemoryStrategy_1, EntityRegistry_1, EntityContainer_1) {
     exports.EntityConfig = EntityConfig_1.default;
     exports.EntityInfo = EntityInfo_1.default;
     exports.Repository = Repository_1.default;
@@ -9,7 +9,7 @@ define(["require", "exports", './EntityConfig', './EntityInfo', './Repository', 
             this.defaultStrategy = new InMemoryStrategy_1.default();
             this.unitOfWork = new UnitOfWork_1.default(this.defaultStrategy);
             this.repositories = {};
-            this.registry = new EntityRegistry_1.default(new MapperContainer_1.default());
+            this.registry = new EntityRegistry_1.default(new EntityContainer_1.default());
         }
         Talaria.getInstance = function () {
             if (!Talaria.instance) {
@@ -39,8 +39,8 @@ define(["require", "exports", './EntityConfig', './EntityInfo', './Repository', 
             enumerable: true,
             configurable: true
         });
-        Talaria.prototype.registerEntity = function (constructor, config, mapperKlass) {
-            this.registry.registerEntity(constructor, config, mapperKlass);
+        Talaria.prototype.registerEntity = function (constructor, config, mapperConstructor) {
+            this.registry.registerEntity(constructor, config, mapperConstructor);
         };
         Talaria.prototype.getEntityInfo = function (name) {
             return this.registry.getEntity(name);

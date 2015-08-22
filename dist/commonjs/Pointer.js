@@ -3,6 +3,20 @@ var Pointer = (function () {
         this.name = name;
         this.key = key;
     }
+    Object.defineProperty(Pointer.prototype, "Name", {
+        get: function () {
+            return this.name;
+        },
+        enumerable: true,
+        configurable: true
+    });
+    Object.defineProperty(Pointer.prototype, "Key", {
+        get: function () {
+            return this.key;
+        },
+        enumerable: true,
+        configurable: true
+    });
     Pointer.prototype.toObject = function () {
         var data = {
             __type: 'pointer',

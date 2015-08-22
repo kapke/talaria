@@ -7,7 +7,9 @@ import personInfoFactory from './personInfoFactory';
 
 class ContactInfoFactory {
     public getContactInfo ():EntityInfo<Contact> {
-        return new EntityInfo(Contact, this.getContactConfig(), this.getContactMapper());
+        var contactDependencies:{[name:string]:EntityInfo<any>} = {};
+        contactDependencies[personInfoFactory.getPersonInfo().config.name] = personInfoFactory.getPersonInfo();
+        return new EntityInfo(Contact, this.getContactConfig(), this.getContactMapper(), contactDependencies);
     }
 
     private getContactConfig ():EntityConfig {

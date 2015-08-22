@@ -10,7 +10,9 @@ class ContactMapper implements Mapper<Contact> {
     private contactConfig:EntityConfig;
     private personMapper:PersonMapper;
 
-    public static getInstance(contactConfig:EntityConfig, personMapper:PersonMapper) {
+    public static getInstance(contactConfig:EntityConfig, ...mappers:Array<PersonMapper>) {
+        var personMapper:PersonMapper;
+        [personMapper] = mappers;
         return new ContactMapper(contactConfig, personMapper);
     }
 
@@ -30,16 +32,22 @@ class ContactMapper implements Mapper<Contact> {
         return new Pointer(this.contactConfig.name, this.extractKey(entity));
     }
 
-    toObjectWithPointers (strategy:PersistenceStrategy, entity:Contact):Promise<Object> {
-        throw new Error('Not implemented');
+    toObjectWithPointers (entity:Contact):Object {
+        return {
+            data: entity.data,
+            person: this.personMapper.toPointer(entity.person).toObject()
+        };
     }
 
     fromObject(data:{person: Object, data:Object}):Contact {
         return new Contact(this.personMapper.fromObject(data.person), data.data);
     }
 
-    fromObjectWithPointers (strategy:PersistenceStrategy, dataWithPointers:Object):Promise<Contact> {
-        throw new Error('Not implemented');
+    fromObjectWithPointers (pointerResolver:(pointer:Pointer)=>Promise<Object>, dataWithPointers:{person:Object, data:Object}):Promise<Contact> {
+        return <Promise<Contact>>pointerResolver(Pointer.fromObject(dataWithPointers.person)).
+            then((personData) => {
+                return new Contact(this.personMapper.fromObject(personData), dataWithPointers.data);
+            });
     }
 
     extractKey(entity:Contact):{person: number} {

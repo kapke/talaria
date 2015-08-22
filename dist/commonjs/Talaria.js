@@ -10,13 +10,13 @@ var UnitOfWork_1 = require('./UnitOfWork');
 exports.UnitOfWork = UnitOfWork_1.default;
 var InMemoryStrategy_1 = require('./PersistenceStrategy/InMemoryStrategy');
 var EntityRegistry_1 = require('./EntityRegistry');
-var MapperContainer_1 = require('./MapperContainer');
+var EntityContainer_1 = require('./EntityContainer');
 var Talaria = (function () {
     function Talaria() {
         this.defaultStrategy = new InMemoryStrategy_1.default();
         this.unitOfWork = new UnitOfWork_1.default(this.defaultStrategy);
         this.repositories = {};
-        this.registry = new EntityRegistry_1.default(new MapperContainer_1.default());
+        this.registry = new EntityRegistry_1.default(new EntityContainer_1.default());
     }
     Talaria.getInstance = function () {
         if (!Talaria.instance) {
@@ -46,8 +46,8 @@ var Talaria = (function () {
         enumerable: true,
         configurable: true
     });
-    Talaria.prototype.registerEntity = function (constructor, config, mapperKlass) {
-        this.registry.registerEntity(constructor, config, mapperKlass);
+    Talaria.prototype.registerEntity = function (constructor, config, mapperConstructor) {
+        this.registry.registerEntity(constructor, config, mapperConstructor);
     };
     Talaria.prototype.getEntityInfo = function (name) {
         return this.registry.getEntity(name);

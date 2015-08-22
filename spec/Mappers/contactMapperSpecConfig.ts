@@ -59,6 +59,15 @@ var contactMapperSpecConfig:MapperSpecConfig<Contact> = {
         var entity:Contact = this.entity();
         entity.person = null;
         return entity;
+    },
+    pointerResolver: (pointer:Pointer):Promise<Object> => {
+        return new Promise<Object> ((resolve, reject) => {
+            if (pointer.Name == 'Person') {
+                resolve(personMapperSpecConfig.data());
+            } else {
+                reject();
+            }
+        });
     }
 };
 
