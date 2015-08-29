@@ -1,21 +1,21 @@
 ///<reference path="../../typings/es6-promise/es6-promise.d.ts" />
 ///<reference path="../../typings/node/node.d.ts" />
 define(["require", "exports", '../Pointer', '../Error/NotFoundError'], function (require, exports, Pointer_1, NotFoundError_1) {
-    var InMemoryStrategy = (function () {
-        function InMemoryStrategy() {
+    var InMemoryOnPointersStrategy = (function () {
+        function InMemoryOnPointersStrategy() {
             this.objects = {};
         }
-        InMemoryStrategy.prototype.create = function (info, obj) {
+        InMemoryOnPointersStrategy.prototype.create = function (info, obj) {
             var _this = this;
             return new Promise(function (resolve) {
-                _this.getCollection(info).push(info.mapper.toObject(obj));
+                _this.getCollection(info).push(info.mapper.toObjectWithPointers(obj));
                 resolve();
             });
         };
-        InMemoryStrategy.prototype.update = function (info, obj) {
+        InMemoryOnPointersStrategy.prototype.update = function (info, obj) {
             var _this = this;
             return new Promise(function (resolve) {
-                _this.findByKey(info, info.mapper.toObject(obj)).then(function (found) {
+                _this.findByKey(info, info.mapper.toObjectWithPointers(obj)).then(function (found) {
                     for (var name in found) {
                         found[name] = obj[name];
                     }
@@ -23,7 +23,7 @@ define(["require", "exports", '../Pointer', '../Error/NotFoundError'], function 
                 });
             });
         };
-        InMemoryStrategy.prototype.delete = function (info, obj) {
+        InMemoryOnPointersStrategy.prototype.delete = function (info, obj) {
             var _this = this;
             var collection = this.getCollection(info);
             var resolved = false;
@@ -40,9 +40,12 @@ define(["require", "exports", '../Pointer', '../Error/NotFoundError'], function 
                 }
             });
         };
-        InMemoryStrategy.prototype.find = function (info, criteria) {
+        InMemoryOnPointersStrategy.prototype.find = function (info, criteria) {
             var _this = this;
             if (criteria === void 0) { criteria = null; }
+            function resolvePointer(pointer) {
+                return this.find(info.dependencies[pointer.Name], pointer);
+            }
             function allFilter(obj) { return true; }
             function strictFilter(obj) {
                 for (var name in criteria) {
@@ -55,19 +58,10 @@ define(["require", "exports", '../Pointer', '../Error/NotFoundError'], function 
             var keyFilter = function (obj) {
                 return _this.matchesKey(info, criteria, obj);
             }, pointerFilterFactory = function (criteria) {
-                function extractKeyFromPointerCriteria(criteria) {
-                    var copy = { __entity: undefined, __type: undefined }, converted = criteria.toObject();
-                    for (var name_1 in converted) {
-                        copy[name_1] = converted[name_1];
-                    }
-                    delete copy.__entity;
-                    delete copy.__type;
-                    return copy;
-                }
-                return _this.matchesKey.bind(_this, info, extractKeyFromPointerCriteria(criteria));
+                return _this.matchesKey.bind(_this, info, criteria.Key);
             };
             return new Promise(function (resolve) {
-                var items, collection = _this.getCollection(info), filter, returnSingle = false;
+                var promises, output, collection = _this.getCollection(info), returnSingle = false, filter;
                 if (criteria == null) {
                     filter = allFilter;
                 }
@@ -81,21 +75,26 @@ define(["require", "exports", '../Pointer', '../Error/NotFoundError'], function 
                 else {
                     filter = strictFilter;
                 }
-                items = collection.filter(filter).map(info.mapper.fromObject);
-                if (returnSingle) {
-                    if (items[0]) {
-                        resolve(items[0]);
+                promises = collection.filter(filter).map(function (item) {
+                    return info.mapper.fromObjectWithPointers(resolvePointer, item);
+                });
+                output = Promise.all(promises).then(function (items) {
+                    if (returnSingle) {
+                        if (items[0]) {
+                            return items[0];
+                        }
+                        else {
+                            return Promise.reject(new NotFoundError_1.default(info, criteria));
+                        }
                     }
                     else {
-                        resolve(Promise.reject(new NotFoundError_1.default(info, criteria)));
+                        return items;
                     }
-                }
-                else {
-                    resolve(items);
-                }
+                });
+                resolve(output);
             });
         };
-        InMemoryStrategy.prototype.findByKey = function (info, keyValue) {
+        InMemoryOnPointersStrategy.prototype.findByKey = function (info, keyValue) {
             var _this = this;
             var collection = this.getCollection(info);
             return new Promise(function (resolve, reject) {
@@ -107,7 +106,7 @@ define(["require", "exports", '../Pointer', '../Error/NotFoundError'], function 
                 reject();
             });
         };
-        InMemoryStrategy.prototype.matchesKey = function (info, ref, current) {
+        InMemoryOnPointersStrategy.prototype.matchesKey = function (info, ref, current) {
             for (var i = 0; i < info.config.key.length; i++) {
                 var name = info.config.key[i];
                 if (ref[name] != current[name]) {
@@ -116,13 +115,13 @@ define(["require", "exports", '../Pointer', '../Error/NotFoundError'], function 
             }
             return true;
         };
-        InMemoryStrategy.prototype.getCollection = function (info) {
+        InMemoryOnPointersStrategy.prototype.getCollection = function (info) {
             if (!this.objects[info.config.name]) {
                 this.objects[info.config.name] = [];
             }
             return this.objects[info.config.name];
         };
-        return InMemoryStrategy;
+        return InMemoryOnPointersStrategy;
     })();
-    exports.default = InMemoryStrategy;
+    exports.default = InMemoryOnPointersStrategy;
 });
