@@ -8,7 +8,7 @@ import personInfoFactory from './Helper/personInfoFactory';
 import customMatchersFactory from './Helper/customMatchersFactory';
 import Pointer from '../lib/Pointer';
 
-export default function strategySpec (strategyName : String, strategyFactory : () => PersistenceStrategy) : void {
+export default function strategySpec (strategyName : String, strategyFactory : () => PersistenceStrategy, onPointers:boolean) : void {
     describe(strategyName + ' Persistence Strategy', () => {
         var strategy:PersistenceStrategy,
             obj:Person,
@@ -51,28 +51,53 @@ export default function strategySpec (strategyName : String, strategyFactory : (
                 done();
            });
         });
-        it('should find object using pointer to it', (done) => {
-            strategy.find(info, new Pointer(info.config.name, {
-                id: 1
-            })).then((received) => {
+        it('should find all stored objects when passing only entityInfo', (done) => {
+            strategy.find(info).then((received) => {
                 expect(received).toEqual([obj]);
                 done();
             });
         });
-        it('should use given mapper for transforming data into entity', (done) => {
-            spyOn(info.mapper, 'fromObject');
-            strategy.find(info, obj).then((received) => {
-                expect(info.mapper.fromObject).toHaveBeenCalled();
-                done();  
+        it('should find object using pointer to it', (done) => {
+            strategy.find(info, new Pointer(info.config.name, {
+                id: 1
+            })).then((received) => {
+                expect(received).toEqual(obj);
+                done();
             });
         });
-        it('should use given mapper for transforming entity into plain object', (done) => {
-            spyOn(info.mapper, 'toObject');
-            var basia:Person = new Person('Basia', 'Mapieska', 2);
-            strategy.create(info, basia).then(() => {
-                expect(info.mapper.toObject).toHaveBeenCalledWith(basia);
-                done();  
+
+        if(onPointers) {
+            it('should use given mapper for transforming data with pointers into entity', (done) => {
+                spyOn(info.mapper, 'fromObjectWithPointers');
+                strategy.find(info, obj).then((received) => {
+                    expect(info.mapper.fromObjectWithPointers).toHaveBeenCalled();
+                    done();
+                });
             });
-        });
+            it('should use given mapper for transforming entity into object with pointers', (done) => {
+                spyOn(info.mapper, 'toObjectWithPointers');
+                var basia:Person = new Person('Basia', 'Mapieska', 2);
+                strategy.create(info, basia).then(() => {
+                    expect(info.mapper.toObjectWithPointers).toHaveBeenCalledWith(basia);
+                    done();
+                });
+            });
+        } else {
+            it('should use given mapper for transforming data into entity', (done) => {
+                spyOn(info.mapper, 'fromObject');
+                strategy.find(info, obj).then((received) => {
+                    expect(info.mapper.fromObject).toHaveBeenCalled();
+                    done();
+                });
+            });
+            it('should use given mapper for transforming entity into plain object', (done) => {
+                spyOn(info.mapper, 'toObject');
+                var basia:Person = new Person('Basia', 'Mapieska', 2);
+                strategy.create(info, basia).then(() => {
+                    expect(info.mapper.toObject).toHaveBeenCalledWith(basia);
+                    done();
+                });
+            });
+        }
     });
 };
