@@ -1,13 +1,15 @@
-///<reference path="../typings/es6-promise/es6-promise.d.ts" />
-///<reference path="../typings/node/node.d.ts" />
+///<reference path="../typings/tsd.d.ts" />
 
-import EntityInfo = require('./EntityInfo');
-import rsvp = require('es6-promise');
-import Promise = rsvp.Promise;
+import {Promise} from 'es6-promise';
+
+import EntityInfo from './EntityInfo';
+import Pointer from './Pointer';
 
 export interface PersistenceStrategy {
-    create (entityInfo:EntityInfo, obj:any):Promise<void>;
-    update (entityInfo:EntityInfo, obj:any):Promise<void>;
-    delete (entityInfo:EntityInfo, obj:any):Promise<void>;
-    find (entityInfo:EntityInfo, criteria:Object);
+    create<T> (entityInfo:EntityInfo<T>, obj:T):Promise<void>;
+    update<T> (entityInfo:EntityInfo<T>, obj:T):Promise<void>;
+    delete<T> (entityInfo:EntityInfo<T>, obj:T):Promise<void>;
+    find<T> (entityInfo:EntityInfo<T>):Promise<T[]>;
+    find<T> (entityInfo:EntityInfo<T>, criteria:Object):Promise<T[]>;
+    find<T> (entityInfo:EntityInfo<T>, pointer:Pointer):Promise<T>;
 }

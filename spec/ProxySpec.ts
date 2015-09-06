@@ -1,6 +1,6 @@
 ///<reference path="../typings/jasmine/jasmine.d.ts" />
 
-import Proxy = require('../lib/Proxy');
+import Proxy from '../lib/Proxy';
 
 describe('Proxy', () => {
     var obj,
@@ -9,19 +9,29 @@ describe('Proxy', () => {
     beforeEach(() => {
         obj = {
             name: 'Ala',
-            has: 'kota'
+            has: 'kota',
+            greet: () => {
+                return "Cześć";
+            }
         };
         accessors = {
             name: {
                 get: () => { return obj.name;},
                 set: (value) => { obj.name = value; }
+            },
+            greet: () => {
+                return obj.greet();
             }
         };
         objProxy = new Proxy(obj, accessors);
     });
     it('should have the same interface as original object', () => {
         for(var name in obj) {
-            expect(obj[name]).toEqual(objProxy[name]);
+            if(typeof obj[name] == 'function') {
+                expect(objProxy[name]).toEqual(jasmine.any(Function));
+            } else {
+                expect(obj[name]).toEqual(objProxy[name]);    
+            }   
         }
     });
     it('should call getter and return value when accessing property', () => {
@@ -47,5 +57,12 @@ describe('Proxy', () => {
         objProxy.has = 'Psa';
         expect(objProxy.has).toEqual('Psa');
         expect(obj.has).toEqual('Psa');
+    });
+    it('should call decorator when calling method', () => {
+        spyOn(accessors, 'greet').and.callThrough();
+        objProxy = new Proxy(obj, accessors);
+        var greeting = objProxy.greet();
+        expect(accessors.greet).toHaveBeenCalled();
+        expect(greeting).toBe('Cześć');
     });
 });

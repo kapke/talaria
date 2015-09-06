@@ -1,19 +1,22 @@
-import ps = require('./PersistenceStrategy');
-import PersistenceStrategy = ps.PersistenceStrategy;
-import Proxy = require('./Proxy');
-import EntityInfo = require('./EntityInfo');
+import {PersistenceStrategy} from './PersistenceStrategy';
+import Proxy from './Proxy';
+import EntityInfo from './EntityInfo';
 
 class TrackedObject {
-    private info:EntityInfo;
+    private info:EntityInfo<any>;
     private object:any;
+    private proxy:Proxy;
 
-    get Info():EntityInfo {return this.info;}
+    get Info():EntityInfo<any> {return this.info;}
 
     get Object():any {return this.object;}
 
-    constructor (info:EntityInfo, object:any) {
+    get Proxy():Proxy {return this.proxy;}
+
+    constructor (info:EntityInfo<any>, object:any, proxy:Proxy) {
         this.info = info;
         this.object = object;
+        this.proxy = proxy;
     }
 }
 
@@ -28,24 +31,28 @@ class UnitOfWork {
         this.strategy = strategy;
     }
 
-    public registerNew (info:EntityInfo, obj) : Object {
-        this.newObjects.push(new TrackedObject(info, obj));
-        return obj;
+    public registerNew (info:EntityInfo<any>, obj) : Object {
+        var tracker:TrackedObject = new TrackedObject(info, obj, this.getProxy(info, obj));
+        this.newObjects.push(tracker);
+        return tracker.Proxy;
     }
 
-    public registerFetched (info:EntityInfo, obj) : Object {
-        this.fetchedObjects.push(new TrackedObject(info, obj));
-        return this.getProxy(info, obj);
+    public registerFetched (info:EntityInfo<any>, obj) : Object {
+        var tracker:TrackedObject = new TrackedObject(info, obj, this.getProxy(info, obj));
+        this.fetchedObjects.push(tracker);
+        return tracker.Proxy;
     }
 
-    public registerDirty (info:EntityInfo, obj) : Object {
-        this.dirtyObjects.push(new TrackedObject(info, obj));
-        return obj;
+    public registerDirty (info:EntityInfo<any>, obj) : Object {
+        var tracker:TrackedObject = new TrackedObject(info, obj, this.getProxy(info, obj));
+        this.dirtyObjects.push(tracker);
+        return tracker.Proxy;
     }
 
-    public registerDeleted (info:EntityInfo, obj) : Object {
-        this.deletedObjects.push(new TrackedObject(info, obj));
-        return obj;
+    public registerDeleted (info:EntityInfo<any>, obj) : Object {
+        var tracker:TrackedObject = new TrackedObject(info, obj, this.getProxy(info, obj));
+        this.deletedObjects.push(tracker);
+        return tracker.Proxy;
     }
 
 	public commit () {
@@ -62,15 +69,17 @@ class UnitOfWork {
         });
     }
 
-    public rollback () {}
+    public rollback () {
+        throw new Error('Not implemented');
+    }
 
-    private getProxy (info:EntityInfo, obj):Proxy {
+    private getProxy (info:EntityInfo<any>, obj):Proxy {
         var setters = {};
 
-        function modificationHandler (info:EntityInfo, target, name, value) {
+        var modificationHandler = (info:EntityInfo<any>, target, name, value) => {
             this.registerDirty(info, target);
             target[name] = value;
-        }
+        };
 
         for(var name in obj) {
             setters[name] = {set: modificationHandler.bind(this, info, obj, name)};
@@ -78,4 +87,4 @@ class UnitOfWork {
         return new Proxy(obj, setters);
     }
 }
-export = UnitOfWork;
+export default UnitOfWork;

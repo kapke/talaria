@@ -3,7 +3,8 @@
 
 function doesLookSame(actual, expected) {
     for(var name in expected) {
-        if(actual[name] != expected[name]) {
+        if((typeof expected[name] == 'function' && typeof actual[name] != 'function') ||
+            (actual[name] != expected[name])) {
             return false;
         }
     }
@@ -55,8 +56,34 @@ class CustomMatchersFactory {
             }
         };
     }
+
+    public toThrowTalariaError () {
+        return {
+            compare: (actual:any, expected: any) => {
+                var givenFunctionName:string = actual.name?'function '+actual.name:'given function',
+                    errorTypeName:string = expected.name || 'given error',
+                    result = {
+                        pass: false,
+                        message: undefined
+                    };
+                try {
+                    actual();
+                } catch (e) {
+                    if(e instanceof expected) {
+                        result.pass = true;
+                    } else {
+                        result.message = `Expected ${e} to be instance of ${errorTypeName}`;
+                    }
+                }
+                if(!result.pass) {
+                    result.message = `Expected ${givenFunctionName} to throw ${errorTypeName} talaria error`;
+                }
+                return result;
+            }
+        };
+    }
 }
 
 var customMatchersFactory:CustomMatchersFactory = new CustomMatchersFactory();
 
-export = customMatchersFactory;
+export default customMatchersFactory;
