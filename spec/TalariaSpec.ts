@@ -23,6 +23,7 @@ describe('Talaria\'s facade', () => {
         entityInfo = personInfoFactory.getPersonInfo();
     });
 
+    //TODO: Maybe not singleton, but just named instances which give you some context?
     it('should be singleton', () => {
         expect(Talaria.getInstance()).toBe(Talaria.getInstance());
     });
@@ -42,6 +43,13 @@ describe('Talaria\'s facade', () => {
         expect(repository).toBeDefined();
         expect(repository).toEqual(jasmine.any(Repository));
     });
+
+    //TODO: there should be specs which describe process of most common usecases:
+    // - persisting entity after creation
+    // - persisting changes
+    // - deleting entity when needed
+    // As these specs will show almost whole functionality for Talaria I think they should be somehow linked in documentation.
+    // Maybe custom doc generator would do this in elegant way?
 
     describe('for handling default persistence strategy', () => {
         var strategy: PersistenceStrategy;
