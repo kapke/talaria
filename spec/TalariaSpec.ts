@@ -44,12 +44,66 @@ describe('Talaria\'s facade', () => {
         expect(repository).toEqual(jasmine.any(Repository));
     });
 
-    //TODO: there should be specs which describe process of most common usecases:
-    // - persisting entity after creation
-    // - persisting changes
-    // - deleting entity when needed
-    // As these specs will show almost whole functionality for Talaria I think they should be somehow linked in documentation.
-    // Maybe custom doc generator would do this in elegant way?
+    describe('functionality: ', () => {
+        let talaria,
+            persistenceStrategy,
+            personRepository;
+
+        beforeEach(() => {
+            talaria = new Talaria();
+            persistenceStrategy = new InMemoryStrategy();
+
+            talaria.DefaultStrategy = persistenceStrategy;
+            talaria.registerEntity(entityInfo.entity, entityInfo.config, PersonMapper);
+            personRepository = talaria.getRepository('Person');
+        });
+
+        it('persisting entity after creation', (done) => {
+            spyOn(persistenceStrategy, 'create').and.callThrough();
+
+            createPerson().then(() => {
+                expect(persistenceStrategy.create).toHaveBeenCalled();
+                done();
+            });
+        });
+
+        it('persisting changes', (done) => {
+            spyOn(persistenceStrategy, 'update').and.callThrough();
+
+            createPerson().then(() => {
+                personRepository.findAll().then(([person]:Person[]) => {
+                    person.beSmith();
+                    talaria.DefaultUnitOfWork.commit();
+
+                    expect(persistenceStrategy.update).toHaveBeenCalled();
+                    done();
+                });
+            });
+        });
+
+        it('deleting entity', (done) => {
+            spyOn(persistenceStrategy, 'delete').and.callThrough();
+
+            createPerson().then(() => {
+                personRepository.findAll().then(([person]:Person[]) => {
+                    personRepository.remove(person).then(() => {
+                        talaria.DefaultUnitOfWork.commit().then(() => {
+                            expect(persistenceStrategy.delete).toHaveBeenCalled();
+                            done();
+                        });
+                    });
+                });
+            });
+        });
+
+        function createPerson () {
+            const person = new Person('Ala', 'Makota');
+
+            personRepository.add(person);
+
+            return talaria.DefaultUnitOfWork.commit();
+        }
+    });
 
     describe('for handling default persistence strategy', () => {
         var strategy: PersistenceStrategy;

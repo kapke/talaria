@@ -55,18 +55,21 @@ class UnitOfWork {
         return tracker.Proxy;
     }
 
-	public commit () {
-        var strategy = this.strategy;
+	public commit () : Promise<any> {
+        const strategy = this.strategy,
+              promises = [];
 
         this.newObjects.forEach(function (obj) {
-            strategy.create(obj.Info, obj.Object);
+            promises.push(strategy.create(obj.Info, obj.Object));
         });
         this.dirtyObjects.forEach(function (obj) {
-            strategy.update(obj.Info, obj.Object);
+            promises.push(strategy.update(obj.Info, obj.Object));
         });
         this.deletedObjects.forEach(function (obj) {
-            strategy.delete(obj.Info, obj.Object);
+            promises.push(strategy.delete(obj.Info, obj.Object));
         });
+
+        return Promise.all(promises);
     }
 
     public rollback () {
